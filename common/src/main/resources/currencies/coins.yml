@@ -1,0 +1,14 @@
+name: "Coin"
+
+starting-value: 1000.0
+
+maximum-value: -1
+
+minimum-value: 0
+
+allow-decimals: true
+
+item-economy:
+  enabled: false
+  items:
+    - material: diamond
