@@ -5,5 +5,5 @@ import com.artillexstudios.axcoins.api.currency.config.CurrencyConfig;
 
 public interface CurrencyProvider<T extends Currency, Z extends CurrencyConfig> {
 
-    T provide(Z config);
+    T provide(int id, Z config);
 }

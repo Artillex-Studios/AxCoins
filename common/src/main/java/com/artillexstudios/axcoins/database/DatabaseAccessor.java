@@ -91,7 +91,7 @@ public class DatabaseAccessor {
                 this.createAccount(userId, currency, currency.config().startingValue());
             }
 
-            return (com.artillexstudios.axcoins.api.user.User) new com.artillexstudios.axcoins.user.User(player, amounts);
+            return (User) new com.artillexstudios.axcoins.user.User(player, amounts);
         }, AsyncUtils.executor()).exceptionally(throwable -> {
             LogUtils.error("Failed to create user account!", throwable);
             return null;
@@ -105,7 +105,8 @@ public class DatabaseAccessor {
                 return null;
             }
 
-            return fetched.provide(config);
+            // TODO: Provide the ID
+            return fetched.provide(0, config);
         }, AsyncUtils.executor());
     }
 
