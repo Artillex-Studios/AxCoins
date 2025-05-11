@@ -1,0 +1,1 @@
+INSERT INTO $table_prefixaxcoins_currencies (name) VALUES(?);

@@ -1,6 +1,7 @@
 package com.artillexstudios.axcoins.api.user;
 
 import com.artillexstudios.axcoins.api.currency.Currency;
+import com.artillexstudios.axcoins.api.currency.CurrencyResponse;
 import org.bukkit.OfflinePlayer;
 
 import java.math.BigDecimal;
@@ -53,7 +54,7 @@ public interface User {
      * @param amount The amount.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
-    CompletableFuture<BigDecimal> give(Currency currency, BigDecimal amount);
+    CompletableFuture<CurrencyResponse> give(Currency currency, BigDecimal amount);
 
     /**
      * Take amount of currency from the user.
@@ -61,7 +62,7 @@ public interface User {
      * @param amount The amount.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
-    CompletableFuture<BigDecimal> take(Currency currency, BigDecimal amount);
+    CompletableFuture<CurrencyResponse> take(Currency currency, BigDecimal amount);
 
     /**
      * Set the amount of currency for the user.
@@ -69,5 +70,5 @@ public interface User {
      * @param amount The amount.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
-    CompletableFuture<BigDecimal> set(Currency currency, BigDecimal amount);
+    CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount);
 }

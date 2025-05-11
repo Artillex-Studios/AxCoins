@@ -1,0 +1,1 @@
+SELECT $table_prefixaxcoins_currencies.id FROM $table_prefixaxcoins_currencies WHERE $table_prefixaxcoins_currencies.name = ?;
