@@ -1,1 +1,0 @@
-UPDATE $table_prefixaxcoins_currency_data SET lock = NULL, lock_time = NULL WHERE lock = ? AND lock_time = ? AND user_id = ? AND currency_id = ?;

@@ -2,6 +2,8 @@ package com.artillexstudios.axcoins.api.user;
 
 import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.api.currency.CurrencyResponse;
+import com.artillexstudios.axcoins.api.logging.LogContext;
+import com.artillexstudios.axcoins.api.logging.arguments.LogArguments;
 import org.bukkit.OfflinePlayer;
 
 import java.math.BigDecimal;
@@ -52,6 +54,15 @@ public interface User {
      * Give the user the amount of currency.
      * @param currency The currency to give.
      * @param amount The amount.
+     * @param context The LogContext to use for logging purposes.
+     * @return A CompletableFuture that is completed when the data is updated in the database.
+     */
+    CompletableFuture<CurrencyResponse> give(Currency currency, BigDecimal amount, LogContext context);
+
+    /**
+     * Give the user the amount of currency.
+     * @param currency The currency to give.
+     * @param amount The amount.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
     CompletableFuture<CurrencyResponse> give(Currency currency, BigDecimal amount);
@@ -60,9 +71,28 @@ public interface User {
      * Take amount of currency from the user.
      * @param currency The currency to take.
      * @param amount The amount.
+     * @param context The LogContext to use for logging purposes.
+     * @return A CompletableFuture that is completed when the data is updated in the database.
+     */
+    CompletableFuture<CurrencyResponse> take(Currency currency, BigDecimal amount, LogContext context);
+
+    /**
+     * Take amount of currency from the user.
+     * @param currency The currency to take.
+     * @param amount The amount.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
     CompletableFuture<CurrencyResponse> take(Currency currency, BigDecimal amount);
+
+
+    /**
+     * Set the amount of currency for the user.
+     * @param currency The currency to set.
+     * @param amount The amount.
+     * @param context The LogContext to use for logging purposes.
+     * @return A CompletableFuture that is completed when the data is updated in the database.
+     */
+    CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, LogContext context);
 
     /**
      * Set the amount of currency for the user.

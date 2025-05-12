@@ -1,1 +1,1 @@
-SELECT $table_prefixaxcoins_currency_data.amount FROM $table_prefixaxcoins_currency_data WHERE $table_prefixaxcoins_currency_data.user_id = ? AND $table_prefixaxcoins_currency_data.currency_id = ? AND lock = ?;
+SELECT $table_prefixaxcoins_currency_data.amount FROM $table_prefixaxcoins_currency_data WHERE $table_prefixaxcoins_currency_data.user_id = ? AND $table_prefixaxcoins_currency_data.currency_id = ?;

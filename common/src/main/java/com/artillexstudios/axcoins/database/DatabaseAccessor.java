@@ -2,7 +2,6 @@ package com.artillexstudios.axcoins.database;
 
 import com.artillexstudios.axapi.database.DatabaseHandler;
 import com.artillexstudios.axapi.database.DatabaseQuery;
-import com.artillexstudios.axapi.database.RunnableQuery;
 import com.artillexstudios.axapi.database.handler.ListHandler;
 import com.artillexstudios.axapi.database.handler.TransformerHandler;
 import com.artillexstudios.axapi.utils.AsyncUtils;
@@ -37,8 +36,6 @@ public class DatabaseAccessor {
     private final DatabaseQuery<Integer> currencySelect;
     private final DatabaseQuery<Integer> currencySet;
     private final DatabaseQuery<String> currencyAmountSelect;
-    private final RunnableQuery<?> lock;
-    private final RunnableQuery<?> unlock;
 
     public DatabaseAccessor(Currencies currencies, DatabaseHandler handler) {
         this.currencies = currencies;
@@ -50,8 +47,6 @@ public class DatabaseAccessor {
         this.currencySelect = this.handler.query("currency_select");
         this.currencySet = this.handler.query("currency_set");
         this.currencyAmountSelect = this.handler.query("currency_amount_select");
-        this.lock = this.handler.query("lock").create();
-        this.unlock = this.handler.query("unlock").create();
     }
 
     public CompletableFuture<?> load() {
@@ -149,97 +144,148 @@ public class DatabaseAccessor {
 
     public CompletableFuture<BigDecimal> fetch(User user, Currency currency) {
         return CompletableFuture.supplyAsync(() -> {
-            return this.transaction(user, currency, lock -> {
-                String amount = this.currencyAmountSelect.create()
-                        .query(user.id(), currency.id(), lock);
-
-                return new BigDecimal(amount);
+            BigDecimal read = this.optimisticRead(user, currency, amount -> {
+                return amount;
             });
+
+            return read == null ? BigDecimal.ZERO : read;
         }, AsyncUtils.executor());
     }
 
     public CompletableFuture<Boolean> has(User user, Currency currency, BigDecimal compareTo) {
         return CompletableFuture.supplyAsync(() -> {
-            return this.transaction(user, currency, lock -> {
-                String amount = this.currencyAmountSelect.create()
-                        .query(user.id(), currency.id(), lock);
-
-                BigDecimal found = new BigDecimal(amount);
-                return found.subtract(compareTo).compareTo(currency.config().minimumValue()) >= 0;
+            Boolean read = this.optimisticRead(user, currency, amount -> {
+                return amount.subtract(compareTo).compareTo(currency.config().minimumValue()) >= 0;
             });
+
+            return read != null && read;
         }, AsyncUtils.executor());
     }
 
     public CompletableFuture<CurrencyResponse> give(User user, Currency currency, BigDecimal currencyAmount) {
         return CompletableFuture.supplyAsync(() -> {
-            return this.transaction(user, currency, lock -> {
-                String amount = this.currencyAmountSelect.create()
-                        .query(user.id(), currency.id());
-
-                BigDecimal bigDecimal;
-                BigDecimal found = bigDecimal = new BigDecimal(amount);
-                bigDecimal = bigDecimal.add(currencyAmount);
-                boolean success = this.currencySet.create()
-                        .update(bigDecimal.toString(), user.id(), currency.id(), lock) == 1;
-                if (Config.debug) {
-                    LogUtils.debug("Give success: {}", success);
-                }
-
-                return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, success);
+            CurrencyResponse read = this.optimisticRead(user, currency, found -> {
+                return new com.artillexstudios.axcoins.currency.CurrencyResponse(found.add(currencyAmount), true);
             });
+
+            return read == null ? new com.artillexstudios.axcoins.currency.CurrencyResponse(BigDecimal.ZERO, false) : read;
         }, AsyncUtils.executor());
     }
 
     public CompletableFuture<CurrencyResponse> take(User user, Currency currency, BigDecimal currencyAmount) {
         return CompletableFuture.supplyAsync(() -> {
-            return this.transaction(user, currency, lock -> {
-                String amount = this.currencyAmountSelect.create()
-                        .query(user.id(), currency.id());
-
-                BigDecimal bigDecimal;
-                BigDecimal found = bigDecimal = new BigDecimal(amount);
-                bigDecimal = bigDecimal.subtract(currencyAmount);
+            CurrencyResponse read = this.optimisticRead(user, currency, found -> {
+                BigDecimal bigDecimal = found.subtract(currencyAmount);
                 if (bigDecimal.compareTo(currency.config().minimumValue()) < 0) {
                     return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
                 }
 
-                boolean success = this.currencySet.create()
-                        .update(bigDecimal.toString(), user.id(), currency.id(), lock) == 1;
-                if (Config.debug) {
-                    LogUtils.debug("Take success: {}", success);
-                }
-
-                return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, success);
+                return new com.artillexstudios.axcoins.currency.CurrencyResponse(bigDecimal, true);
             });
+
+            return read == null ? new com.artillexstudios.axcoins.currency.CurrencyResponse(BigDecimal.ZERO, false) : read;
         }, AsyncUtils.executor());
     }
 
     public CompletableFuture<CurrencyResponse> set(User user, Currency currency, BigDecimal currencyAmount) {
         return CompletableFuture.supplyAsync(() -> {
-            return this.transaction(user, currency, lock -> {
-                String amount = this.currencyAmountSelect.create()
-                        .query(user.id(), currency.id());
-
-                BigDecimal found = new BigDecimal(amount);
-                boolean success = this.currencySet.create()
-                        .update(currencyAmount.toString(), user.id(), currency.id(), lock) == 1;
-                if (Config.debug) {
-                    LogUtils.debug("Take success: {}", success);
-                }
-
-                return new com.artillexstudios.axcoins.currency.CurrencyResponse(success ? currencyAmount : found, success);
+            CurrencyResponse read = this.optimisticRead(user, currency, found -> {
+                return new com.artillexstudios.axcoins.currency.CurrencyResponse(currencyAmount, true);
             });
+
+            return read == null ? new com.artillexstudios.axcoins.currency.CurrencyResponse(BigDecimal.ZERO, false) : read;
         }, AsyncUtils.executor());
     }
 
-    public <T> T transaction(User user, Currency currency, Function<String, T> supplier) {
-        long timeStamp;
-        String uuid = UUID.randomUUID().toString();
+    // This is a very complex method, I know
+    // It had to be done though, as this is way more feasible than the one I had previously, and this is
+    // more likely to run.
+    // This may need a rewrite! (But I don't know what's the best way to rewrite this, so it will have to wait.)
+    public <T> T optimisticRead(User user, Currency currency, Function<BigDecimal, T> supplier) {
+        if (Config.debug) {
+            LogUtils.debug("Optimistic read begin!");
+        }
+
+        int iteration = 0;
         while (true) {
-            long currentTime = System.currentTimeMillis();
-            if (this.lock.update(uuid, currentTime, currentTime, user.id(), currency.id()) == 1) {
-                timeStamp = currentTime;
-                break;
+            if (Config.debug) {
+                LogUtils.debug("Optimistic read, iteration: {}", iteration);
+            }
+            String amount = this.currencyAmountSelect.create()
+                    .query(user.id(), currency.id());
+
+            if (amount == null) {
+                return null;
+            }
+            BigDecimal currentState = new BigDecimal(amount);
+            if (Config.debug) {
+                LogUtils.debug("Found amount: {}", amount);
+            }
+            long start = System.currentTimeMillis();
+            T value = supplier.apply(currentState);
+            long took = System.currentTimeMillis() - start;
+            if (Config.debug) {
+                LogUtils.debug("Read for {}ms! Response: {}", took, value);
+            }
+
+            if (value instanceof BigDecimal decimal) {
+                if (decimal.equals(currentState)) {
+                    if (Config.debug) {
+                        LogUtils.debug("No changes were made!");
+                    }
+                    // No need to write anything, we are all set!
+                    return value;
+                }
+
+                boolean success = this.currencySet.create()
+                        .update(decimal.toString(), user.id(), currency.id(), amount) == 1;
+
+                if (success) {
+                    if (Config.debug) {
+                        LogUtils.debug("Success!");
+                    }
+                    return value;
+                }
+
+                if (Config.debug) {
+                    LogUtils.debug("Retrying!");
+                }
+            } else if (value instanceof CurrencyResponse response) {
+                if (!response.success()) {
+                    if (Config.debug) {
+                        LogUtils.debug("Response failed!");
+                    }
+                    // We failed somewhere in the java code, just give back the value and run
+                    // we don't need to update the database
+                    return value;
+                }
+
+                if (response.amount().equals(currentState)) {
+                    if (Config.debug) {
+                        LogUtils.debug("No changes were made!");
+                    }
+                    // No need to write anything, we are all set!
+                    return value;
+                }
+
+                boolean success = this.currencySet.create()
+                        .update(response.amount().toString(), user.id(), currency.id(), amount) == 1;
+
+                if (success) {
+                    if (Config.debug) {
+                        LogUtils.debug("Success!");
+                    }
+                    return value;
+                }
+
+                if (Config.debug) {
+                    LogUtils.debug("Retrying!");
+                }
+            } else {
+                if (Config.debug) {
+                    LogUtils.debug("Other class, just returning it.");
+                }
+                return value;
             }
 
             try {
@@ -247,12 +293,8 @@ public class DatabaseAccessor {
             } catch (InterruptedException exception) {
                 LogUtils.error("Failed to sleep thread!", exception);
             }
+            iteration++;
         }
-
-        T value = supplier.apply(uuid);
-
-        this.unlock.update(uuid, timeStamp, user.id(), currency.id());
-        return value;
     }
 
     public void createAccount(Integer id, Currency currency, BigDecimal amount) {

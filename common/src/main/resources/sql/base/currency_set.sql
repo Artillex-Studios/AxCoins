@@ -1,1 +1,1 @@
-UPDATE $table_prefixaxcoins_currency_data SET amount = ? WHERE user_id = ? AND currency_id = ? AND lock = ?;
+UPDATE $table_prefixaxcoins_currency_data SET amount = ? WHERE user_id = ? AND currency_id = ? AND amount = ?;

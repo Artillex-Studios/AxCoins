@@ -25,10 +25,10 @@ public class Config implements ConfigurationPart {
                 """)
         public boolean enabled = true;
         @Comment("""
-                If the plugin should store the IP address of the
-                parties of the transaction.
+                If the plugin should store the stacktrace
+                for API calls with no logging arguments.
                 """)
-        public boolean storeIPs = true;
+        public boolean storeStackTrace = true;
     }
 
     @Comment("""
@@ -37,10 +37,6 @@ public class Config implements ConfigurationPart {
             but with separate currency systems.
             """)
     public static String tablePrefix = "";
-    @Comment("""
-            How often should changes to players' accounts get saved?
-            """)
-    public static int autosaveSeconds = 300;
     @Comment("""
             The pool size of the asynchronous executor
             we use to process some things asynchronously,

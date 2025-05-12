@@ -1,8 +1,11 @@
 package com.artillexstudios.axcoins.api.currency.config;
 
-import java.math.BigDecimal;
+import org.jspecify.annotations.Nullable;
 
-public interface CurrencyConfig {
+import java.math.BigDecimal;
+import java.util.List;
+
+public interface CurrencyConfig extends MessagesConfig {
 
     String name();
 
@@ -15,4 +18,15 @@ public interface CurrencyConfig {
     BigDecimal minimumValue();
 
     boolean allowDecimals();
+
+    boolean enablePay();
+
+    List<String> commands();
+
+    @Nullable
+    String permission();
+
+    BigDecimal minimumPayAmount();
+
+    BigDecimal maximumPayAmount();
 }

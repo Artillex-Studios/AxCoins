@@ -1,1 +1,0 @@
-UPDATE $table_prefixaxcoins_currency_data SET lock = ?, lock_time = ? WHERE (lock_time IS NULL OR ? - lock_time > 10000) AND user_id = ? AND currency_id = ?;
