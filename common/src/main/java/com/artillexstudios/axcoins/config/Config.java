@@ -12,11 +12,13 @@ import com.artillexstudios.axcoins.utils.FileUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 public class Config implements ConfigurationPart {
     private static final Config INSTANCE = new Config();
     public static DatabaseConfig database = new DatabaseConfig();
     public static Logging logging = new Logging();
+    public static NumberFormatting numberFormatting = new NumberFormatting();
 
     @Serializable
     public static class Logging {
@@ -29,6 +31,11 @@ public class Config implements ConfigurationPart {
                 for API calls with no logging arguments.
                 """)
         public boolean storeStackTrace = true;
+    }
+
+    @Serializable
+    public static class NumberFormatting {
+        public Map<String, String> shorthandValues = Map.of("k", "1000", "m", "1000000", "b", "1000000000");
     }
 
     @Comment("""
