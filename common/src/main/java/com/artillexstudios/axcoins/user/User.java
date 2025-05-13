@@ -93,16 +93,16 @@ public class User implements com.artillexstudios.axcoins.api.user.User {
     }
 
     @Override
-    public CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, LogContext context) {
-        return this.accessor.set(this, currency, amount).thenApply(response -> {
+    public CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, LogContext context, boolean force) {
+        return this.accessor.set(this, currency, amount, force).thenApply(response -> {
             this.currencyCache.put(currency, response.amount());
             return response;
         });
     }
 
     @Override
-    public CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount) {
-        return this.set(currency, amount, null);
+    public CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, boolean force) {
+        return this.set(currency, amount, null, force);
     }
 
     public static String walkStack() {

@@ -3,7 +3,6 @@ package com.artillexstudios.axcoins.api.user;
 import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.api.currency.CurrencyResponse;
 import com.artillexstudios.axcoins.api.logging.LogContext;
-import com.artillexstudios.axcoins.api.logging.arguments.LogArguments;
 import org.bukkit.OfflinePlayer;
 
 import java.math.BigDecimal;
@@ -84,15 +83,24 @@ public interface User {
      */
     CompletableFuture<CurrencyResponse> take(Currency currency, BigDecimal amount);
 
-
     /**
      * Set the amount of currency for the user.
      * @param currency The currency to set.
      * @param amount The amount.
      * @param context The LogContext to use for logging purposes.
+     * @param force Whether to take into account the currencies limitations.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
-    CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, LogContext context);
+    CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, LogContext context, boolean force);
+
+    /**
+     * Set the amount of currency for the user.
+     * @param currency The currency to set.
+     * @param amount The amount.
+     * @param force Whether to take into account the currencies limitations.
+     * @return A CompletableFuture that is completed when the data is updated in the database.
+     */
+    CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, boolean force);
 
     /**
      * Set the amount of currency for the user.
@@ -100,5 +108,17 @@ public interface User {
      * @param amount The amount.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
-    CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount);
+    default CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, LogContext context) {
+        return this.set(currency, amount, context, false);
+    }
+
+    /**
+     * Set the amount of currency for the user.
+     * @param currency The currency to set.
+     * @param amount The amount.
+     * @return A CompletableFuture that is completed when the data is updated in the database.
+     */
+    default CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount) {
+        return this.set(currency, amount, false);
+    }
 }

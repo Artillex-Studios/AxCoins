@@ -165,6 +165,11 @@ public class DatabaseAccessor {
     public CompletableFuture<CurrencyResponse> give(User user, Currency currency, BigDecimal currencyAmount) {
         return CompletableFuture.supplyAsync(() -> {
             CurrencyResponse read = this.optimisticRead(user, currency, found -> {
+                BigDecimal bigDecimal = found.add(currencyAmount);
+                if (bigDecimal.compareTo(currency.config().maximumValue()) > 0) {
+                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
+                }
+
                 return new com.artillexstudios.axcoins.currency.CurrencyResponse(found.add(currencyAmount), true);
             });
 
@@ -187,9 +192,17 @@ public class DatabaseAccessor {
         }, AsyncUtils.executor());
     }
 
-    public CompletableFuture<CurrencyResponse> set(User user, Currency currency, BigDecimal currencyAmount) {
+    public CompletableFuture<CurrencyResponse> set(User user, Currency currency, BigDecimal currencyAmount, boolean force) {
         return CompletableFuture.supplyAsync(() -> {
             CurrencyResponse read = this.optimisticRead(user, currency, found -> {
+                if (currencyAmount.compareTo(currency.config().minimumValue()) < 0 && !force) {
+                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
+                }
+
+                if (currencyAmount.compareTo(currency.config().maximumValue()) > 0 && !force) {
+                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
+                }
+
                 return new com.artillexstudios.axcoins.currency.CurrencyResponse(currencyAmount, true);
             });
 
