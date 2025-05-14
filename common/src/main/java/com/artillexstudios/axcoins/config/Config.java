@@ -10,6 +10,7 @@ import com.artillexstudios.axapi.utils.YamlUtils;
 import com.artillexstudios.axcoins.AxCoinsPlugin;
 import com.artillexstudios.axcoins.utils.FileUtils;
 
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -35,7 +36,7 @@ public class Config implements ConfigurationPart {
 
     @Serializable
     public static class NumberFormatting {
-        public Map<String, String> shorthandValues = Map.of("k", "1000", "m", "1000000", "b", "1000000000");
+        public Map<String, BigDecimal> shorthandValues = Map.of("k", new BigDecimal("1000"), "m", new BigDecimal("1000000"), "b", new BigDecimal("1000000000"));
     }
 
     @Comment("""

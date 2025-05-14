@@ -19,6 +19,6 @@ public final class AxCoinsAPIImpl implements AxCoinsAPI {
 
     @Override
     public CurrencyProviders providers() {
-        return AxCoinsPlugin.instance().currencyProviders();
+        return AxCoinsPlugin.instance().currencyProviders() ;
     }
 }

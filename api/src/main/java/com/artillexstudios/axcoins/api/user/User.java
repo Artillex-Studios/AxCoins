@@ -34,6 +34,12 @@ public interface User {
      */
     BigDecimal cached(Currency currency);
 
+    default CompletableFuture<Boolean> canGive(Currency currency, BigDecimal amount) {
+        return this.value(currency).thenApply(found -> {
+            return found.add(amount).compareTo(currency.config().maximumValue()) <= 0;
+        });
+    }
+
     /**
      * Get the amount of this currency.
      * @param currency The currency to check the amount of.
