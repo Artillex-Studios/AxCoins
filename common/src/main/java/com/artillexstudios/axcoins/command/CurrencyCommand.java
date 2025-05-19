@@ -168,9 +168,83 @@ public class CurrencyCommand {
                         AxCoinsAPI.instance().getUser(offlinePlayer).thenAccept(user -> {
                             user.give(this.currency, amount).thenAccept(response -> {
                                 // TODO: Fail and success messages
-                               if (!response.success()) {
-                                   return;
-                               }
+                                if (!response.success()) {
+                                    return;
+                                }
+                            });
+                        });
+                    });
+                });
+
+        CommandAPICommand adminGiveAllCommand = new CommandAPICommand("giveall")
+                .withPermission("axcoins.%s.admin.giveall".formatted(this.currency.identifier()))
+                .withArguments(this.currency.config().allowDecimals() ? NumberArguments.bigDecimal("amount", BigDecimal.ZERO, BigDecimal.valueOf(Long.MAX_VALUE)) : NumberArguments.bigInteger("amount", BigInteger.ZERO, BigInteger.valueOf(Long.MAX_VALUE)))
+                .executes((sender, args) -> {
+                    BigDecimal amount;
+                    if (config.allowDecimals()) {
+                        amount = args.getByClass("amount", BigDecimal.class);
+                    } else {
+                        BigInteger value = args.getByClass("amount", BigInteger.class);
+                        if (value == null) {
+                            return;
+                        }
+
+                        amount = new BigDecimal(value);
+                    }
+
+                    if (amount == null) {
+                        return;
+                    }
+
+                    AxCoinsAPI.instance().repository().onlineUsers().forEach(user -> {
+                        user.give(this.currency, amount).thenAccept(response -> {
+                            // TODO: Fail and success messages
+                            if (!response.success()) {
+                                return;
+                            }
+                        });
+                    });
+                });
+
+        CommandAPICommand adminTakeCommand = new CommandAPICommand("take")
+                .withPermission("axcoins.%s.admin.take".formatted(this.currency.identifier()))
+                .withArguments(new AsyncOfflinePlayerArgument("player"), this.currency.config().allowDecimals() ? NumberArguments.bigDecimal("amount", BigDecimal.ZERO, BigDecimal.valueOf(Long.MAX_VALUE)) : NumberArguments.bigInteger("amount", BigInteger.ZERO, BigInteger.valueOf(Long.MAX_VALUE)))
+                .executes((sender, args) -> {
+                    CompletableFuture<OfflinePlayer> player = args.getUnchecked("player");
+                    if (player == null) {
+                        return;
+                    }
+
+                    BigDecimal amount;
+                    if (config.allowDecimals()) {
+                        amount = args.getByClass("amount", BigDecimal.class);
+                    } else {
+                        BigInteger value = args.getByClass("amount", BigInteger.class);
+                        if (value == null) {
+                            return;
+                        }
+
+                        amount = new BigDecimal(value);
+                    }
+
+                    if (amount == null) {
+                        return;
+                    }
+
+                    player.thenAccept(offlinePlayer -> {
+                        AxCoinsAPI.instance().getUser(offlinePlayer).thenAccept(user -> {
+                            user.has(this.currency, amount).thenAccept(result -> {
+                                if (!result) {
+                                    // TODO: Not enough money message
+                                    return;
+                                }
+
+                                user.take(this.currency, amount).thenAccept(response -> {
+                                    // TODO: Fail and success messages
+                                    if (!response.success()) {
+                                        return;
+                                    }
+                                });
                             });
                         });
                     });
@@ -215,6 +289,8 @@ public class CurrencyCommand {
 
         adminCommand.withSubcommand(adminGiveCommand);
         adminCommand.withSubcommand(adminSetCommand);
+        adminCommand.withSubcommand(adminTakeCommand);
+        adminCommand.withSubcommand(adminGiveAllCommand);
 
         command.withSubcommand(paySubCommand);
         command.withSubcommand(balanceCommand);

@@ -7,6 +7,8 @@ import com.artillexstudios.axcoins.database.DatabaseAccessor;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,6 +71,11 @@ public final class UserRepository implements com.artillexstudios.axcoins.api.use
 
             return temp == null ? loaded : temp;
         });
+    }
+
+    @Override
+    public Collection<User> onlineUsers() {
+        return Collections.unmodifiableCollection(this.loadedUsers.values());
     }
 
     @Override
