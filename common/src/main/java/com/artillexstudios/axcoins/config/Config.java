@@ -3,6 +3,8 @@ package com.artillexstudios.axcoins.config;
 import com.artillexstudios.axapi.config.YamlConfiguration;
 import com.artillexstudios.axapi.config.annotation.Comment;
 import com.artillexstudios.axapi.config.annotation.ConfigurationPart;
+import com.artillexstudios.axapi.config.annotation.Ignored;
+import com.artillexstudios.axapi.config.annotation.PostProcess;
 import com.artillexstudios.axapi.config.annotation.Serializable;
 import com.artillexstudios.axapi.database.DatabaseConfig;
 import com.artillexstudios.axapi.libs.snakeyaml.DumperOptions;
@@ -13,6 +15,10 @@ import com.artillexstudios.axcoins.utils.FileUtils;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Config implements ConfigurationPart {
@@ -37,6 +43,34 @@ public class Config implements ConfigurationPart {
     @Serializable
     public static class NumberFormatting {
         public Map<String, BigDecimal> shorthandValues = Map.of("k", new BigDecimal("1000"), "m", new BigDecimal("1000000"), "b", new BigDecimal("1000000000"));
+        @Comment("""
+                When using formatting, how many precision digits should there be?
+                For example, when transforming 1354320 with a precision of 4, the result is:
+                1.3543m
+                Whereas with a precision of two:
+                1.35m
+                """)
+        public int precision = 3;
+        @Ignored
+        public Map<BigDecimal, String> sorted = new LinkedHashMap<>();
+
+        @PostProcess
+        public void postProcess() {
+            this.sorted.clear();
+            List<BigDecimal> values = new ArrayList<>();
+            this.shorthandValues.forEach((key, value) -> {
+                values.add(value);
+            });
+            values.sort(Comparator.reverseOrder());
+            for (BigDecimal value : values) {
+                for (Map.Entry<String, BigDecimal> entry : this.shorthandValues.entrySet()) {
+                    if (entry.getValue().equals(value)) {
+                        this.sorted.put(value, entry.getKey());
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     @Comment("""

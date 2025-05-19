@@ -4,6 +4,7 @@ import com.artillexstudios.axcoins.api.currency.Currencies;
 import com.artillexstudios.axcoins.api.currency.provider.CurrencyProviders;
 import com.artillexstudios.axcoins.api.user.User;
 import com.artillexstudios.axcoins.api.user.UserRepository;
+import com.artillexstudios.axcoins.api.utils.NumberFormatter;
 import net.kyori.adventure.util.Services;
 import org.bukkit.OfflinePlayer;
 
@@ -37,6 +38,10 @@ public interface AxCoinsAPI {
     Currencies currencies();
 
     CurrencyProviders providers();
+
+    NumberFormatter newFormatter();
+
+    NumberFormatter newFormatter(int defaultPrecision);
 
     final class Holder {
         private static final AxCoinsAPI INSTANCE = Services.service(AxCoinsAPI.class).orElseThrow();

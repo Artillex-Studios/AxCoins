@@ -125,6 +125,7 @@ public class CurrencyCommand {
                 });
 
         // TODO: Permission
+        // TODO: Other player's balance checking
         CommandAPICommand balanceCommand = new CommandAPICommand("balance")
                 .executesPlayer((sender, args) -> {
                     User user = AxCoinsAPI.instance().getUserIfLoadedImmediately(sender);
