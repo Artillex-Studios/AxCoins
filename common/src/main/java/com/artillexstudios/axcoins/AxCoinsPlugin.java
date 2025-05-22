@@ -8,6 +8,7 @@ import com.artillexstudios.axapi.utils.logging.LogUtils;
 import com.artillexstudios.axcoins.config.Config;
 import com.artillexstudios.axcoins.currency.Currencies;
 import com.artillexstudios.axcoins.currency.CurrencyProviders;
+import com.artillexstudios.axcoins.currency.impl.ConfigCurrency;
 import com.artillexstudios.axcoins.database.DatabaseAccessor;
 import com.artillexstudios.axcoins.listener.PlayerListener;
 import com.artillexstudios.axcoins.user.UserRepository;
@@ -51,6 +52,7 @@ public final class AxCoinsPlugin extends AxPlugin {
                 LogUtils.debug("Loaded DatabaseAccessor!");
             }
         });
+        this.currencies.register(new ConfigCurrency());
 
         CommandAPI.onEnable();
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this.userRepository), this);
