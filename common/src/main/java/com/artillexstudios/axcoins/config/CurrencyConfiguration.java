@@ -45,12 +45,21 @@ public class CurrencyConfiguration implements ConfigurationPart {
         }
 
         YamlConfiguration<CurrencyConfiguration> configuration = YamlConfiguration.of(file.toPath(), CurrencyConfiguration.class)
-                .configVersion(1, "config-version")
                 .withDumperOptions(options -> {
                     options.setPrettyFlow(true);
                     options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
                 }).build();
 
         return configuration.create();
+    }
+
+    public static String configurationProvider(File file) {
+        YamlConfiguration<?> config = YamlConfiguration.of(file.toPath())
+                .withDumperOptions(options -> {
+                    options.setPrettyFlow(true);
+                    options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+                }).build();
+
+        return config.getString("config-provider");
     }
 }

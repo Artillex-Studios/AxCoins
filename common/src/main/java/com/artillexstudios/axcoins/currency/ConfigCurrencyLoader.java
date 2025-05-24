@@ -31,10 +31,10 @@ public final class ConfigCurrencyLoader {
                 continue;
             }
 
-            CurrencyConfiguration configuration = CurrencyConfiguration.load(file);
-            CurrencyConfigProvider<CurrencyConfig> configProvider = this.providers.fetch(configuration.configProvider);
+            String configurationProvider = CurrencyConfiguration.configurationProvider(file);
+            CurrencyConfigProvider<CurrencyConfig> configProvider = this.providers.fetch(configurationProvider);
             if (configProvider == null) {
-                LogUtils.warn("Unknown config provider {}!", configuration.configProvider);
+                LogUtils.warn("Unknown config provider {}!", configurationProvider);
                 continue;
             }
 

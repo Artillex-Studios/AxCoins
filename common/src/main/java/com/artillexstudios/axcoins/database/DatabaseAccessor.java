@@ -34,6 +34,7 @@ public class DatabaseAccessor {
     private final DatabaseQuery<Integer> userInsert;
     private final DatabaseQuery<?> accountInsert;
     private final DatabaseQuery<Integer> currencySelect;
+    private final DatabaseQuery<Integer> currencyInsert;
     private final DatabaseQuery<Integer> currencySet;
     private final DatabaseQuery<String> currencyAmountSelect;
 
@@ -45,6 +46,7 @@ public class DatabaseAccessor {
         this.userInsert = this.handler.query("user_insert");
         this.accountInsert = this.handler.query("account_insert");
         this.currencySelect = this.handler.query("currency_select");
+        this.currencyInsert = this.handler.query("currency_insert");
         this.currencySet = this.handler.query("currency_set");
         this.currencyAmountSelect = this.handler.query("currency_amount_select");
     }
@@ -52,8 +54,11 @@ public class DatabaseAccessor {
     public CompletableFuture<?> load() {
         return CompletableFuture.runAsync(() -> {
             this.handler.query("setup")
-                    .execute();
-        }, AsyncUtils.executor());
+                    .create().update();
+        }, AsyncUtils.executor()).exceptionally(throwable -> {
+            LogUtils.error("Exception!", throwable);
+            return null;
+        });
     }
 
     public CompletableFuture<User> loadUser(UUID uuid) {
@@ -126,7 +131,7 @@ public class DatabaseAccessor {
                     LogUtils.debug("Inserting currency {}!", config.name());
                 }
 
-                id = this.currencySet.create()
+                id = this.currencyInsert.create()
                         .execute(config.name());
             }
 

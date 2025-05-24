@@ -2,6 +2,10 @@ package com.artillexstudios.axcoins;
 
 import com.artillexstudios.axapi.AxPlugin;
 import com.artillexstudios.axapi.database.DatabaseHandler;
+import com.artillexstudios.axapi.database.DatabaseTypes;
+import com.artillexstudios.axapi.database.impl.H2DatabaseType;
+import com.artillexstudios.axapi.database.impl.MySQLDatabaseType;
+import com.artillexstudios.axapi.database.impl.SQLiteDatabaseType;
 import com.artillexstudios.axapi.dependencies.DependencyManagerWrapper;
 import com.artillexstudios.axapi.utils.AsyncUtils;
 import com.artillexstudios.axapi.utils.featureflags.FeatureFlags;
@@ -57,7 +61,12 @@ public final class AxCoinsPlugin extends AxPlugin {
 
     @Override
     public void enable() {
+        DatabaseTypes.register(new H2DatabaseType("com.artillexstudios.axcoins.libs.h2"), true);
+        DatabaseTypes.register(new SQLiteDatabaseType());
+        DatabaseTypes.register(new MySQLDatabaseType());
+
         Config.reload();
+        Config.database.tablePrefix(Config.tablePrefix);
         AsyncUtils.setup(Config.asyncProcessorPoolSize);
         this.currencies = new Currencies();
         this.currencyProviders = new CurrencyProviders();
@@ -79,11 +88,11 @@ public final class AxCoinsPlugin extends AxPlugin {
             if (Config.debug) {
                 LogUtils.debug("Loaded all config currencies!");
             }
+
+            AxCoinsCommand.enable();
         });
 
         new Placeholders().load();
-
-        AxCoinsCommand.enable();
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this.userRepository), this);
     }
 

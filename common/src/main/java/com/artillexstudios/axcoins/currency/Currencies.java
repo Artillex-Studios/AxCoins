@@ -4,6 +4,7 @@ import com.artillexstudios.axapi.utils.logging.LogUtils;
 import com.artillexstudios.axcoins.AxCoinsPlugin;
 import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.api.currency.config.CurrencyConfig;
+import com.artillexstudios.axcoins.command.CurrencyCommand;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
@@ -20,6 +21,8 @@ public final class Currencies implements com.artillexstudios.axcoins.api.currenc
     public <T extends CurrencyConfig> CompletableFuture<Currency> register(T config) {
         return AxCoinsPlugin.instance().accessor().loadCurrency(config).thenApply(currency -> {
             this.register(currency);
+            new CurrencyCommand(currency)
+                    .register();
             return currency;
         });
     }
