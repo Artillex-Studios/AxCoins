@@ -7,6 +7,6 @@ public class ConfigCurrencyProvider implements CurrencyProvider<ConfigCurrency, 
 
     @Override
     public ConfigCurrency provide(int id, CurrencyConfig config) {
-        return new ConfigCurrency();
+        return new ConfigCurrency(id, config);
     }
 }

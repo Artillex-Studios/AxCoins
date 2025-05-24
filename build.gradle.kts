@@ -30,7 +30,7 @@ subprojects {
     }
 
     dependencies {
-        implementation("com.artillexstudios.axapi:axapi:1.4.677:all")
+        implementation("com.artillexstudios.axapi:axapi:1.4.678:all")
         compileOnly("com.github.ben-manes.caffeine:caffeine:3.2.0")
         compileOnly("org.spigotmc:spigot-api:1.21-R0.1-SNAPSHOT")
         compileOnly("dev.jorel:commandapi-bukkit-shade:10.0.0")

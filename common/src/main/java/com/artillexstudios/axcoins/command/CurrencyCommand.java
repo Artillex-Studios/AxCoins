@@ -1,5 +1,6 @@
 package com.artillexstudios.axcoins.command;
 
+import com.artillexstudios.axapi.placeholders.PlaceholderHandler;
 import com.artillexstudios.axapi.utils.MessageUtils;
 import com.artillexstudios.axcoins.api.AxCoinsAPI;
 import com.artillexstudios.axcoins.api.currency.Currency;
@@ -47,7 +48,7 @@ public class CurrencyCommand {
             }
 
             // TODO: Placeholders
-            MessageUtils.sendMessage(sender, config.prefix(), config.balance());
+            MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.balance(), user));
         });
 
         // TODO: use correct max value for pay

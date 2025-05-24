@@ -3,20 +3,10 @@ package com.artillexstudios.axcoins.currency.impl;
 import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.api.currency.config.CurrencyConfig;
 
-public class ConfigCurrency implements Currency {
-
-    @Override
-    public int id() {
-        return 1;
-    }
+public record ConfigCurrency(int id, CurrencyConfig config) implements Currency {
 
     @Override
     public String identifier() {
-        return "currency";
-    }
-
-    @Override
-    public CurrencyConfig config() {
-        return null;
+        return this.config.identifier();
     }
 }

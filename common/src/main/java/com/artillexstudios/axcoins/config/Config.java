@@ -9,7 +9,6 @@ import com.artillexstudios.axapi.config.annotation.Serializable;
 import com.artillexstudios.axapi.database.DatabaseConfig;
 import com.artillexstudios.axapi.libs.snakeyaml.DumperOptions;
 import com.artillexstudios.axapi.utils.YamlUtils;
-import com.artillexstudios.axcoins.AxCoinsPlugin;
 import com.artillexstudios.axcoins.utils.FileUtils;
 
 import java.math.BigDecimal;
@@ -115,7 +114,6 @@ public class Config implements ConfigurationPart {
         if (this.config == null) {
             this.config = YamlConfiguration.of(path, Config.class)
                     .configVersion(1, "config-version")
-                    .withDefaults(AxCoinsPlugin.instance().getResource("config.yml"))
                     .withDumperOptions(options -> {
                         options.setPrettyFlow(true);
                         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);

@@ -7,9 +7,15 @@ import java.util.List;
 
 public interface CurrencyConfig extends MessagesConfig {
 
+    void refresh();
+
+    String identifier();
+
     String name();
 
     String provider();
+
+    String configProvider();
 
     BigDecimal startingValue();
 
