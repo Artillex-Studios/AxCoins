@@ -59,6 +59,7 @@ public class CurrencyConfiguration implements ConfigurationPart {
                     options.setPrettyFlow(true);
                     options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
                 }).build();
+        config.load();
 
         return config.getString("config-provider");
     }
