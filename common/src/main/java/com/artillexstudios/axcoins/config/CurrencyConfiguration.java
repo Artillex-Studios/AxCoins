@@ -10,6 +10,7 @@ import com.artillexstudios.axapi.utils.logging.LogUtils;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CurrencyConfiguration implements ConfigurationPart {
@@ -21,7 +22,7 @@ public class CurrencyConfiguration implements ConfigurationPart {
     public BigDecimal minimumValue = BigDecimal.ZERO;
     public boolean allowDecimals = false;
     public boolean enablePay = true;
-    public List<String> commands = List.of("coins", "coin");
+    public List<String> commands = new ArrayList<>(List.of("coins", "coin"));
     public String permission = "axcoins.coin";
     public BigDecimal minimumPayAmount = BigDecimal.ONE;
     public BigDecimal maximumPayAmount = BigDecimal.valueOf(-1L);

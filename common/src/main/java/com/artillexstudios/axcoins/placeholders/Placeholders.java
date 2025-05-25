@@ -17,7 +17,8 @@ public class Placeholders {
 
         PlaceholderHandler.register("balance_raw_<currency>", new PlaceholderArguments(new PlaceholderArgument<>("currency", CurrencyResolver.class)), ctx -> {
             Currency currency = ctx.argument("currency");
-            User user = ctx.resolve(User.class);
+            Player player = ctx.resolve(Player.class);
+            User user = AxCoinsAPI.instance().getUserIfLoadedImmediately(player);
             return user.cached(currency).toString();
         });
 

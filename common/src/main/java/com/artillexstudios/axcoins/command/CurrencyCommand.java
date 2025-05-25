@@ -136,7 +136,7 @@ public class CurrencyCommand {
                     }
 
                     // TODO: Placeholders
-                    MessageUtils.sendMessage(sender, config.prefix(), config.balance());
+                    MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.balance(), user));
                 });
 
         CommandAPICommand adminCommand = new CommandAPICommand("admin");

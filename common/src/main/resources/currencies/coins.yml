@@ -1,6 +1,6 @@
 name: "Coin"
 
-starting-value: 1000.0
+starting-value: "0"
 
 maximum-value: -1
 
