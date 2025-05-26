@@ -12,6 +12,7 @@ import com.artillexstudios.axapi.utils.featureflags.FeatureFlags;
 import com.artillexstudios.axapi.utils.logging.LogUtils;
 import com.artillexstudios.axcoins.command.AxCoinsCommand;
 import com.artillexstudios.axcoins.config.Config;
+import com.artillexstudios.axcoins.config.Language;
 import com.artillexstudios.axcoins.currency.ConfigCurrencyLoader;
 import com.artillexstudios.axcoins.currency.Currencies;
 import com.artillexstudios.axcoins.currency.CurrencyConfigProviders;
@@ -67,6 +68,7 @@ public final class AxCoinsPlugin extends AxPlugin {
         DatabaseTypes.register(new MySQLDatabaseType());
 
         Config.reload();
+        Language.reload();
         Config.database.tablePrefix(Config.tablePrefix);
         AsyncUtils.setup(Config.asyncProcessorPoolSize);
         this.currencies = new Currencies();

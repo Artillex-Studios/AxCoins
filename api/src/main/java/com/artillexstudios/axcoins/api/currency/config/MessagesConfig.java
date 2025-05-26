@@ -9,4 +9,8 @@ public interface MessagesConfig {
     String insufficientFunds();
 
     String cantSendSelf();
+
+    String giveFailed();
+
+    String giveSuccess();
 }

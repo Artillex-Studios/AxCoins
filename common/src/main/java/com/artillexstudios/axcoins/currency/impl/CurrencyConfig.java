@@ -1,7 +1,7 @@
 package com.artillexstudios.axcoins.currency.impl;
 
 import com.artillexstudios.axcoins.config.CurrencyConfiguration;
-import com.artillexstudios.axcoins.config.Messages;
+import com.artillexstudios.axcoins.config.Language;
 import org.apache.commons.io.FilenameUtils;
 import org.jspecify.annotations.Nullable;
 
@@ -91,24 +91,35 @@ public class CurrencyConfig implements com.artillexstudios.axcoins.api.currency.
     @Override
     public String prefix() {
         String prefix = this.configuration.messages.prefix;
-        return prefix == null ? Messages.prefix : prefix;
+        return prefix == null ? Language.currencies.prefix : prefix;
     }
 
     @Override
     public String balance() {
         String balance = this.configuration.messages.balance;
-        return balance == null ? Messages.balance.replace("%currency%", this.identifier()) : balance;
+        return balance == null ? Language.currencies.balance.replace("%currency%", this.identifier()) : balance;
     }
 
     @Override
     public String insufficientFunds() {
-        String balance = this.configuration.messages.insufficientFunds;
-        return balance == null ? Messages.insufficientFunds : balance;
+        String insufficientFunds = this.configuration.messages.insufficientFunds;
+        return insufficientFunds == null ? Language.currencies.insufficientFunds : insufficientFunds;
     }
 
     @Override
     public String cantSendSelf() {
-        String balance = this.configuration.messages.cantSendSelf;
-        return balance == null ? Messages.cantSendSelf : balance;
+        String cantSendSelf = this.configuration.messages.cantSendSelf;
+        return cantSendSelf == null ? Language.currencies.cantSendSelf : cantSendSelf;
+    }
+
+    @Override
+    public String giveFailed() {
+        String giveFailed = this.configuration.messages.giveFailed;
+        return giveFailed == null ? Language.currencies.giveFailed : giveFailed;
+    }
+
+    @Override
+    public String giveSuccess() {
+        return "";
     }
 }

@@ -28,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class DatabaseAccessor {
+    private static final BigDecimal NEGATIVE_ONE = BigDecimal.valueOf(-1L);
     private final Currencies currencies;
     private final DatabaseHandler handler;
     private final DatabaseQuery<List<UserDTO>> userSelect;
@@ -67,18 +68,29 @@ public class DatabaseAccessor {
                     .query(uuid);
 
             if (userDTO != null && !userDTO.isEmpty()) {
+                if (Config.debug) {
+                    LogUtils.debug("UserDTO is not empty!");
+                }
+
                 Map<Currency, BigDecimal> cache = HashMap.newHashMap(userDTO.size());
                 for (UserDTO dto : userDTO) {
                     Currency currency = this.currencies.fetch(dto.currencyId());
+                    if (Config.debug) {
+                        LogUtils.debug("Currency: {}", currency);
+                    }
                     if (currency == null) {
                         continue;
                     }
 
                     cache.put(currency, new BigDecimal(dto.value()));
                 }
+
+                if (Config.debug) {
+                    LogUtils.debug("Cache: {}", cache);
+                }
                 // Get the currencies which do not have values for the user.
                 for (Currency currency : this.currencies.registered()) {
-                    if (!cache.containsKey(currency)) {
+                    if (cache.containsKey(currency)) {
                         continue;
                     }
 
@@ -124,24 +136,24 @@ public class DatabaseAccessor {
             }
 
             Integer id = this.currencySelect.create()
-                    .query(config.name());
+                    .query(config.identifier());
 
             if (id == null) {
                 if (Config.debug) {
-                    LogUtils.debug("Inserting currency {}!", config.name());
+                    LogUtils.debug("Inserting currency {}!", config.identifier());
                 }
 
                 id = this.currencyInsert.create()
-                        .execute(config.name());
+                        .execute(config.identifier());
             }
 
             if (id == null) {
-                LogUtils.error("Failed to insert currency {}!", config.name());
+                LogUtils.error("Failed to insert currency {}!", config.identifier());
                 return null;
             }
 
             if (Config.debug) {
-                LogUtils.debug("Found currency {} with id {}!", config.name(), id);
+                LogUtils.debug("Found currency {} with id {}!", config.identifier(), id);
             }
             return fetched.provide(id, config);
         }, AsyncUtils.executor());
@@ -171,7 +183,7 @@ public class DatabaseAccessor {
         return CompletableFuture.supplyAsync(() -> {
             CurrencyResponse read = this.optimisticRead(user, currency, found -> {
                 BigDecimal bigDecimal = found.add(currencyAmount);
-                if (bigDecimal.compareTo(currency.config().maximumValue()) > 0) {
+                if (NEGATIVE_ONE.compareTo(currency.config().maximumValue()) != 0 && bigDecimal.compareTo(currency.config().maximumValue()) > 0) {
                     return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
                 }
 
@@ -204,7 +216,7 @@ public class DatabaseAccessor {
                     return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
                 }
 
-                if (currencyAmount.compareTo(currency.config().maximumValue()) > 0 && !force) {
+                if (NEGATIVE_ONE.compareTo(currency.config().maximumValue()) != 0 && currencyAmount.compareTo(currency.config().maximumValue()) > 0 && !force) {
                     return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
                 }
 

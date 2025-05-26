@@ -10,6 +10,7 @@ import com.artillexstudios.axcoins.command.argument.NumberArguments;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.AsyncOfflinePlayerArgument;
 import dev.jorel.commandapi.arguments.PlayerArgument;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -169,10 +170,12 @@ public class CurrencyCommand {
                     player.thenAccept(offlinePlayer -> {
                         AxCoinsAPI.instance().getUser(offlinePlayer).thenAccept(user -> {
                             user.give(this.currency, amount).thenAccept(response -> {
-                                // TODO: Fail and success messages
                                 if (!response.success()) {
+                                    MessageUtils.sendMessage(sender, config.prefix(), config.giveFailed(), Placeholder.unparsed("player", offlinePlayer.getName()));
                                     return;
                                 }
+
+                                MessageUtils.sendMessage(sender, config.prefix(), config.giveSuccess(), Placeholder.unparsed("player", offlinePlayer.getName()));
                             });
                         });
                     });
