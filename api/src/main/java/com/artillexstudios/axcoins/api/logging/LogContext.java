@@ -4,6 +4,8 @@ import com.artillexstudios.axapi.collections.IdentityArrayMap;
 import com.artillexstudios.axcoins.api.logging.arguments.LogArgument;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Set;
+
 public class LogContext {
     private final IdentityArrayMap<LogArgument<Object>, Object> arguments;
 
@@ -18,6 +20,10 @@ public class LogContext {
     @Nullable
     public <T> T argument(LogArgument<T> argument) {
         return (T) this.arguments.get(argument);
+    }
+
+    public Set<LogArgument<Object>> arguments() {
+        return this.arguments.keySet();
     }
 
     public static class Builder {
