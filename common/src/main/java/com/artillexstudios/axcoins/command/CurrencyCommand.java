@@ -171,7 +171,10 @@ public class CurrencyCommand {
                         AxCoinsAPI.instance().getUser(offlinePlayer).thenAccept(user -> {
                             user.give(this.currency, amount).thenAccept(response -> {
                                 if (!response.success()) {
-                                    MessageUtils.sendMessage(sender, config.prefix(), config.giveFailed(), Placeholder.unparsed("player", offlinePlayer.getName()));
+                                    MessageUtils.sendMessage(sender, config.prefix(), config.giveFailed(), Placeholder.unparsed("player", offlinePlayer.getName()),
+                                            Placeholder.unparsed("amount", NumberArguments.formatter.format(amount)),
+                                            Placeholder.parsed("currency", this.currency.config().name())
+                                    );
                                     return;
                                 }
 

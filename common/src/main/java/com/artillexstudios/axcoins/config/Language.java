@@ -38,10 +38,10 @@ public class Language implements ConfigurationPart {
     @Serializable
     public static final class Currencies {
         public String prefix = "<#DDCC00><b>AxCoins</b> <gray>» ";
-        public String balance = "<white>Your current balance is %balance_short_%currency%_5%";
+        public String balance = "<white>Your current balance is <balance_short_%currency%_5>";
         public String insufficientFunds = "<#FF0000>You don't have enough coins for that!";
         public String cantSendSelf = "<#FF0000>You can't send coins to yourself!";
-        public String giveFailed = "<#FF0000>Failed to give currency to <player>!";
+        public String giveFailed = "<#FF0000>Failed to give <amount> <currency> to <player>!";
     }
 
     @Comment("Do not touch!")
