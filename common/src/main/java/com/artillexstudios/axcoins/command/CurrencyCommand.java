@@ -7,6 +7,7 @@ import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.api.currency.config.CurrencyConfig;
 import com.artillexstudios.axcoins.api.user.User;
 import com.artillexstudios.axcoins.command.argument.NumberArguments;
+import com.artillexstudios.axcoins.config.Language;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.AsyncOfflinePlayerArgument;
 import dev.jorel.commandapi.arguments.PlayerArgument;
@@ -44,21 +45,19 @@ public class CurrencyCommand {
         command.executesPlayer((sender, args) -> {
             User user = AxCoinsAPI.instance().getUserIfLoadedImmediately(sender);
             if (user == null) {
-                // TODO: Not yet loaded message
+                MessageUtils.sendMessage(sender, config.prefix(), Language.notYetLoaded);
                 return;
             }
 
-            // TODO: Placeholders
             MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.balance(), user));
         });
 
-        // TODO: use correct max value for pay
         CommandAPICommand paySubCommand = new CommandAPICommand("pay")
-                .withArguments(new PlayerArgument("player"), config.allowDecimals() ? NumberArguments.bigDecimal("amount", BigDecimal.ZERO, BigDecimal.valueOf(Long.MAX_VALUE)) : NumberArguments.bigInteger("amount", BigInteger.ZERO, BigInteger.valueOf(Long.MAX_VALUE)))
+                .withArguments(new PlayerArgument("player"), config.allowDecimals() ? NumberArguments.bigDecimal("amount", this.currency.config().minimumValue(), this.currency.config().maximumValue()) : NumberArguments.bigInteger("amount", this.currency.config().minimumValue().toBigInteger(), this.currency.config().maximumValue().toBigInteger()))
                 .executesPlayer((sender, args) -> {
                     User user = AxCoinsAPI.instance().getUserIfLoadedImmediately(sender);
                     if (user == null) {
-                        // TODO: Not yet loaded message
+                        MessageUtils.sendMessage(sender, config.prefix(), Language.notYetLoaded);
                         return;
                     }
 
@@ -74,7 +73,7 @@ public class CurrencyCommand {
 
                     User receiver = AxCoinsAPI.instance().getUserIfLoadedImmediately(player);
                     if (receiver == null) {
-                        // TODO: Other not yet loaded message
+                        MessageUtils.sendMessage(sender, config.prefix(), Language.otherNotYetLoaded);
                         return;
                     }
 
@@ -132,11 +131,10 @@ public class CurrencyCommand {
                 .executesPlayer((sender, args) -> {
                     User user = AxCoinsAPI.instance().getUserIfLoadedImmediately(sender);
                     if (user == null) {
-                        // TODO: Not yet loaded message
+                        MessageUtils.sendMessage(sender, config.prefix(), Language.notYetLoaded);
                         return;
                     }
 
-                    // TODO: Placeholders
                     MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.balance(), user));
                 });
 
@@ -178,7 +176,11 @@ public class CurrencyCommand {
                                     return;
                                 }
 
-                                MessageUtils.sendMessage(sender, config.prefix(), config.giveSuccess(), Placeholder.unparsed("player", offlinePlayer.getName()));
+                                MessageUtils.sendMessage(sender, config.prefix(), config.giveSuccess(), Placeholder.unparsed("player", offlinePlayer.getName()),
+                                        Placeholder.unparsed("amount", NumberArguments.formatter.format(amount)),
+                                        Placeholder.parsed("currency", this.currency.config().name()),
+                                        Placeholder.parsed("balance", NumberArguments.formatter.format(response.amount()))
+                                );
                             });
                         });
                     });

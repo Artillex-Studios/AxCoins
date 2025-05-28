@@ -42,7 +42,12 @@ public class Language implements ConfigurationPart {
         public String insufficientFunds = "<#FF0000>You don't have enough coins for that!";
         public String cantSendSelf = "<#FF0000>You can't send coins to yourself!";
         public String giveFailed = "<#FF0000>Failed to give <amount> <currency> to <player>!";
+        public String giveSuccess = "<#00FF00>Successfully gave <white><player> <amount></white> of currency <white><currency></white>! Their new balance is: <white><balance></white>.";
     }
+
+    public static String invalidNumberFormat = "<#FF0000>Invalid number format <white><number></white>! Try something like <white>1000</white>!";
+    public static String notYetLoaded = "<#FF0000>Your user data has not loaded yet! Please try again in a bit!";
+    public static String otherNotYetLoaded = "<#FF0000>The other user's data has not loaded yet! Please try again in a bit!";
 
     @Comment("Do not touch!")
     public static int configVersion = 1;

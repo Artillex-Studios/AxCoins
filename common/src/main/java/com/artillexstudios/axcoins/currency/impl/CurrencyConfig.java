@@ -120,6 +120,7 @@ public class CurrencyConfig implements com.artillexstudios.axcoins.api.currency.
 
     @Override
     public String giveSuccess() {
-        return "";
+        String giveSuccess = this.configuration.messages.giveSuccess;
+        return giveSuccess == null ? Language.currencies.giveSuccess : giveSuccess;
     }
 }

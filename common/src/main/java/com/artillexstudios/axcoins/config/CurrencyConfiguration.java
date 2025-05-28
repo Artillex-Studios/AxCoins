@@ -36,6 +36,7 @@ public class CurrencyConfiguration implements ConfigurationPart {
         public String insufficientFunds = null;
         public String cantSendSelf = null;
         public String giveFailed = null;
+        public String giveSuccess = null;
     }
 
     public static CurrencyConfiguration load(File file) {

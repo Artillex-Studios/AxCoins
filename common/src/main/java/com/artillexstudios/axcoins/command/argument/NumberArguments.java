@@ -1,13 +1,14 @@
 package com.artillexstudios.axcoins.command.argument;
 
+import com.artillexstudios.axapi.utils.StringUtils;
 import com.artillexstudios.axcoins.api.AxCoinsAPI;
 import com.artillexstudios.axcoins.api.utils.BigDecimalUtils;
 import com.artillexstudios.axcoins.api.utils.BigIntegerUtils;
 import com.artillexstudios.axcoins.api.utils.NumberFormatter;
+import com.artillexstudios.axcoins.config.Language;
 import dev.jorel.commandapi.arguments.Argument;
 import dev.jorel.commandapi.arguments.CustomArgument;
 import dev.jorel.commandapi.arguments.StringArgument;
-import net.kyori.adventure.text.Component;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -20,8 +21,7 @@ public class NumberArguments {
             try {
                 return BigDecimalUtils.clamp(formatter.parseBigDecimal(parser.input()), minValue, maxValue);
             } catch (NumberFormatException exception) {
-                // TODO: Message
-                throw CustomArgument.CustomArgumentException.fromAdventureComponent(Component.empty());
+                throw CustomArgument.CustomArgumentException.fromAdventureComponent(StringUtils.format(Language.invalidNumberFormat));
             }
         });
     }
@@ -31,8 +31,7 @@ public class NumberArguments {
             try {
                 return BigIntegerUtils.clamp(formatter.parseBigDecimal(parser.input()).toBigInteger(), minValue, maxValue);
             } catch (NumberFormatException exception) {
-                // TODO: Message
-                throw CustomArgument.CustomArgumentException.fromAdventureComponent(Component.empty());
+                throw CustomArgument.CustomArgumentException.fromAdventureComponent(StringUtils.format(Language.invalidNumberFormat));
             }
         });
     }
