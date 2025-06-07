@@ -10,7 +10,6 @@ import com.artillexstudios.axcoins.command.argument.NumberArguments;
 import com.artillexstudios.axcoins.config.Language;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.AsyncOfflinePlayerArgument;
-import dev.jorel.commandapi.arguments.PlayerArgument;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -19,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class CurrencyCommand {
@@ -53,7 +53,7 @@ public class CurrencyCommand {
         });
 
         CommandAPICommand paySubCommand = new CommandAPICommand("pay")
-                .withArguments(new PlayerArgument("player"), config.allowDecimals() ? NumberArguments.bigDecimal("amount", this.currency.config().minimumValue(), this.currency.config().maximumValue()) : NumberArguments.bigInteger("amount", this.currency.config().minimumValue().toBigInteger(), this.currency.config().maximumValue().toBigInteger()))
+                .withArguments(new AsyncOfflinePlayerArgument("player"), config.allowDecimals() ? NumberArguments.bigDecimal("amount", this.currency.config().minimumValue(), this.currency.config().maximumValue()) : NumberArguments.bigInteger("amount", this.currency.config().minimumValue().toBigInteger(), this.currency.config().maximumValue().toBigInteger()))
                 .executesPlayer((sender, args) -> {
                     User user = AxCoinsAPI.instance().getUserIfLoadedImmediately(sender);
                     if (user == null) {
@@ -61,81 +61,96 @@ public class CurrencyCommand {
                         return;
                     }
 
-                    Player player = args.getByClass("player", Player.class);
-                    if (player == null) {
+                    CompletableFuture<OfflinePlayer> playerFuture = args.getUnchecked("player");
+                    if (playerFuture == null) {
                         return;
                     }
 
-                    if (player.getUniqueId().equals(sender.getUniqueId())) {
-                        MessageUtils.sendMessage(sender, config.prefix(), config.cantSendSelf());
-                        return;
-                    }
-
-                    User receiver = AxCoinsAPI.instance().getUserIfLoadedImmediately(player);
-                    if (receiver == null) {
-                        MessageUtils.sendMessage(sender, config.prefix(), Language.otherNotYetLoaded);
-                        return;
-                    }
-
-                    BigDecimal amount;
-                    if (config.allowDecimals()) {
-                        amount = args.getByClass("amount", BigDecimal.class);
-                    } else {
-                        BigInteger value = args.getByClass("amount", BigInteger.class);
-                        if (value == null) {
+                    playerFuture.thenAccept(player -> {
+                        if (player.getUniqueId().equals(sender.getUniqueId())) {
+                            MessageUtils.sendMessage(sender, config.prefix(), config.cantSendSelf());
                             return;
                         }
 
-                        amount = new BigDecimal(value);
-                    }
-
-                    if (amount == null) {
-                        return;
-                    }
-
-                    user.has(this.currency, amount).thenAccept(has -> {
-                        if (!has) {
-                            MessageUtils.sendMessage(sender, config.prefix(), config.insufficientFunds());
+                        User receiver = AxCoinsAPI.instance().getUserIfLoadedImmediately(player);
+                        if (receiver == null) {
+                            MessageUtils.sendMessage(sender, config.prefix(), Language.otherNotYetLoaded);
                             return;
                         }
 
-                        receiver.canGive(this.currency, amount).thenAccept(canGive -> {
-                            if (!canGive) {
-                                // TODO: Failed because too much
+                        BigDecimal amount;
+                        if (config.allowDecimals()) {
+                            amount = args.getByClass("amount", BigDecimal.class);
+                        } else {
+                            BigInteger value = args.getByClass("amount", BigInteger.class);
+                            if (value == null) {
                                 return;
                             }
 
-                            user.take(this.currency, amount).thenAccept(response -> {
-                                if (!response.success()) {
-                                    // TODO: Failed message
+                            amount = new BigDecimal(value);
+                        }
+
+                        if (amount == null) {
+                            return;
+                        }
+
+                        user.has(this.currency, amount).thenAccept(has -> {
+                            if (!has) {
+                                MessageUtils.sendMessage(sender, config.prefix(), config.insufficientFunds());
+                                return;
+                            }
+
+                            receiver.canGive(this.currency, amount).thenAccept(canGive -> {
+                                if (!canGive) {
+                                    MessageUtils.sendMessage(sender, config.prefix(), config.receiverTooMuch());
                                     return;
                                 }
 
-                                receiver.give(this.currency, amount).thenAccept(giveResponse -> {
+                                user.take(this.currency, amount).thenAccept(response -> {
                                     if (!response.success()) {
-                                        // TODO: Send message about giving back
-                                        user.give(this.currency, amount);
+                                        MessageUtils.sendMessage(sender, config.prefix(), config.insufficientFunds());
                                         return;
                                     }
 
-                                    // TODO: Success
+                                    receiver.give(this.currency, amount).thenAccept(giveResponse -> {
+                                        if (!response.success()) {
+                                            MessageUtils.sendMessage(sender, config.prefix(), config.receiverTooMuch());
+                                            user.give(this.currency, amount);
+                                            return;
+                                        }
+
+                                        MessageUtils.sendMessage(sender, config.prefix(), config.paySuccess());
+                                        Player onlinePlayer = player.getPlayer();
+                                        if (onlinePlayer != null) {
+                                            MessageUtils.sendMessage(onlinePlayer, config.prefix(), config.receiveSuccess());
+                                        }
+                                    });
                                 });
                             });
                         });
                     });
                 });
 
-        // TODO: Permission
-        // TODO: Other player's balance checking
-        CommandAPICommand balanceCommand = new CommandAPICommand("balance")
-                .executesPlayer((sender, args) -> {
-                    User user = AxCoinsAPI.instance().getUserIfLoadedImmediately(sender);
-                    if (user == null) {
-                        MessageUtils.sendMessage(sender, config.prefix(), Language.notYetLoaded);
-                        return;
-                    }
 
-                    MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.balance(), user));
+        CommandAPICommand balanceCommand = new CommandAPICommand("balance")
+                .withOptionalArguments(new AsyncOfflinePlayerArgument("player")
+                        .withPermission("axcoins.%s.admin.set".formatted(this.currency.identifier()))
+                )
+                .executesPlayer((sender, args) -> {
+                    Optional<CompletableFuture<OfflinePlayer>> playerFuture = args.getOptionalUnchecked("player");
+                    if (playerFuture.isEmpty()) {
+                        playerFuture = Optional.of(CompletableFuture.completedFuture(sender));
+                    }
+                    playerFuture.orElseThrow().thenAccept(player -> {
+                        AxCoinsAPI.instance().getUser(player).thenAccept(user -> {
+                            if (user == null) {
+                                MessageUtils.sendMessage(sender, config.prefix(), Language.notYetLoaded);
+                                return;
+                            }
+
+                            MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.balance(), user));
+                        });
+                    });
                 });
 
         CommandAPICommand adminCommand = new CommandAPICommand("admin");

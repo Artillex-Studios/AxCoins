@@ -13,4 +13,10 @@ public interface MessagesConfig {
     String giveFailed();
 
     String giveSuccess();
+
+    String receiverTooMuch();
+
+    String paySuccess();
+
+    String receiveSuccess();
 }
