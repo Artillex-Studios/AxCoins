@@ -73,6 +73,11 @@ public class Config implements ConfigurationPart {
     }
 
     @Comment("""
+            The cooldown between being able to use the pay command in milliseconds.
+            1 second is 1000 milliseconds, and that is the default.
+            """)
+    public static long payCooldownMillis = 1000L;
+    @Comment("""
             What the table prefix of the database should be.
             This is useful, if you want to connect multiple servers to the same database
             but with separate currency systems.

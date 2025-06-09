@@ -1,12 +1,15 @@
 package com.artillexstudios.axcoins.command;
 
 import com.artillexstudios.axapi.placeholders.PlaceholderHandler;
+import com.artillexstudios.axapi.utils.Cooldown;
 import com.artillexstudios.axapi.utils.MessageUtils;
+import com.artillexstudios.axapi.utils.logging.LogUtils;
 import com.artillexstudios.axcoins.api.AxCoinsAPI;
 import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.api.currency.config.CurrencyConfig;
 import com.artillexstudios.axcoins.api.user.User;
 import com.artillexstudios.axcoins.command.argument.NumberArguments;
+import com.artillexstudios.axcoins.config.Config;
 import com.artillexstudios.axcoins.config.Language;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.AsyncOfflinePlayerArgument;
@@ -19,9 +22,12 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class CurrencyCommand {
+    private final Cooldown<UUID> payCooldown = new Cooldown<>(true);
+    private final Cooldown<UUID> balanceCooldown = new Cooldown<>(true);
     private final Currency currency;
 
     public CurrencyCommand(Currency currency) {
@@ -55,6 +61,14 @@ public class CurrencyCommand {
         CommandAPICommand paySubCommand = new CommandAPICommand("pay")
                 .withArguments(new AsyncOfflinePlayerArgument("player"), config.allowDecimals() ? NumberArguments.bigDecimal("amount", this.currency.config().minimumValue(), this.currency.config().maximumValue()) : NumberArguments.bigInteger("amount", this.currency.config().minimumValue().toBigInteger(), this.currency.config().maximumValue().toBigInteger()))
                 .executesPlayer((sender, args) -> {
+                    if (this.payCooldown.hasCooldown(sender.getUniqueId())) {
+                        MessageUtils.sendMessage(sender, config.prefix(), config.cooldown(),
+                                Placeholder.unparsed("cooldown", String.valueOf(this.payCooldown.getRemainingAsSeconds(sender.getUniqueId())))
+                        );
+                        return;
+                    }
+
+                    this.payCooldown.addCooldown(sender.getUniqueId(), Config.payCooldownMillis);
                     User user = AxCoinsAPI.instance().getUserIfLoadedImmediately(sender);
                     if (user == null) {
                         MessageUtils.sendMessage(sender, config.prefix(), Language.notYetLoaded);
@@ -69,61 +83,73 @@ public class CurrencyCommand {
                     playerFuture.thenAccept(player -> {
                         if (player.getUniqueId().equals(sender.getUniqueId())) {
                             MessageUtils.sendMessage(sender, config.prefix(), config.cantSendSelf());
+                            this.payCooldown.remove(sender.getUniqueId());
                             return;
                         }
 
-                        User receiver = AxCoinsAPI.instance().getUserIfLoadedImmediately(player);
-                        if (receiver == null) {
-                            MessageUtils.sendMessage(sender, config.prefix(), Language.otherNotYetLoaded);
-                            return;
-                        }
-
-                        BigDecimal amount;
-                        if (config.allowDecimals()) {
-                            amount = args.getByClass("amount", BigDecimal.class);
-                        } else {
-                            BigInteger value = args.getByClass("amount", BigInteger.class);
-                            if (value == null) {
+                        AxCoinsAPI.instance().getUser(player).thenAccept(receiver -> {
+                            if (receiver == null) {
+                                MessageUtils.sendMessage(sender, config.prefix(), Language.otherNotYetLoaded);
+                                this.payCooldown.remove(sender.getUniqueId());
                                 return;
                             }
 
-                            amount = new BigDecimal(value);
-                        }
-
-                        if (amount == null) {
-                            return;
-                        }
-
-                        user.has(this.currency, amount).thenAccept(has -> {
-                            if (!has) {
-                                MessageUtils.sendMessage(sender, config.prefix(), config.insufficientFunds());
-                                return;
-                            }
-
-                            receiver.canGive(this.currency, amount).thenAccept(canGive -> {
-                                if (!canGive) {
-                                    MessageUtils.sendMessage(sender, config.prefix(), config.receiverTooMuch());
+                            BigDecimal amount;
+                            if (config.allowDecimals()) {
+                                amount = args.getByClass("amount", BigDecimal.class);
+                            } else {
+                                BigInteger value = args.getByClass("amount", BigInteger.class);
+                                if (value == null) {
                                     return;
                                 }
 
-                                user.take(this.currency, amount).thenAccept(response -> {
-                                    if (!response.success()) {
-                                        MessageUtils.sendMessage(sender, config.prefix(), config.insufficientFunds());
+                                amount = new BigDecimal(value);
+                            }
+
+                            if (amount == null) {
+                                return;
+                            }
+
+                            user.has(this.currency, amount).thenAccept(has -> {
+                                if (!has) {
+                                    MessageUtils.sendMessage(sender, config.prefix(), config.insufficientFunds());
+                                    this.payCooldown.remove(sender.getUniqueId());
+                                    return;
+                                }
+
+                                receiver.canGive(this.currency, amount).thenAccept(canGive -> {
+                                    if (!canGive) {
+                                        MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.receiverTooMuch(), user, amount));
+                                        this.payCooldown.remove(sender.getUniqueId());
                                         return;
                                     }
 
-                                    receiver.give(this.currency, amount).thenAccept(giveResponse -> {
+                                    user.take(this.currency, amount).thenAccept(response -> {
                                         if (!response.success()) {
-                                            MessageUtils.sendMessage(sender, config.prefix(), config.receiverTooMuch());
-                                            user.give(this.currency, amount);
+                                            MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.insufficientFunds(), user, amount));
+                                            this.payCooldown.remove(sender.getUniqueId());
                                             return;
                                         }
 
-                                        MessageUtils.sendMessage(sender, config.prefix(), config.paySuccess());
-                                        Player onlinePlayer = player.getPlayer();
-                                        if (onlinePlayer != null) {
-                                            MessageUtils.sendMessage(onlinePlayer, config.prefix(), config.receiveSuccess());
-                                        }
+                                        receiver.give(this.currency, amount).thenAccept(giveResponse -> {
+                                            if (!response.success()) {
+                                                MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.receiverTooMuch(), user, amount));
+                                                user.give(this.currency, amount);
+                                                this.payCooldown.remove(sender.getUniqueId());
+                                                return;
+                                            }
+
+                                            LogUtils.info("Pay success!");
+                                            MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.paySuccess(), user, amount),
+                                                    Placeholder.unparsed("player", player.getName())
+                                            );
+                                            Player onlinePlayer = player.getPlayer();
+                                            if (onlinePlayer != null) {
+                                                MessageUtils.sendMessage(onlinePlayer, config.prefix(), PlaceholderHandler.parse(config.receiveSuccess(), AxCoinsAPI.instance().getUserIfLoadedImmediately(onlinePlayer), amount),
+                                                        Placeholder.unparsed("player", sender.getName())
+                                                );
+                                            }
+                                        });
                                     });
                                 });
                             });
@@ -136,11 +162,41 @@ public class CurrencyCommand {
                 .withOptionalArguments(new AsyncOfflinePlayerArgument("player")
                         .withPermission("axcoins.%s.admin.set".formatted(this.currency.identifier()))
                 )
-                .executesPlayer((sender, args) -> {
+                .executes((sender, args) -> {
                     Optional<CompletableFuture<OfflinePlayer>> playerFuture = args.getOptionalUnchecked("player");
                     if (playerFuture.isEmpty()) {
-                        playerFuture = Optional.of(CompletableFuture.completedFuture(sender));
+                        LogUtils.info("No player");
+                        if (!(sender instanceof Player player)) {
+                            return;
+                        }
+
+                        if (this.balanceCooldown.hasCooldown(player.getUniqueId())) {
+                            LogUtils.info("Has cooldown");
+                            return;
+                        }
+
+                        User user = AxCoinsAPI.instance().getUserIfLoadedImmediately(player);
+                        if (user == null) {
+                            MessageUtils.sendMessage(sender, config.prefix(), Language.notYetLoaded);
+                            return;
+                        }
+
+                        user.value(this.currency).thenAccept(amount -> {
+                            LogUtils.info("Balance check");
+                            MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.balance(), amount, user));
+                        });
+                        this.balanceCooldown.addCooldown(player.getUniqueId(), 250L);
+                        return;
                     }
+
+                    if (sender instanceof Player player) {
+                        if (this.balanceCooldown.hasCooldown(player.getUniqueId())) {
+                            return;
+                        }
+
+                        this.balanceCooldown.addCooldown(player.getUniqueId(), 250L);
+                    }
+
                     playerFuture.orElseThrow().thenAccept(player -> {
                         AxCoinsAPI.instance().getUser(player).thenAccept(user -> {
                             if (user == null) {
@@ -148,7 +204,11 @@ public class CurrencyCommand {
                                 return;
                             }
 
-                            MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.balance(), user));
+                            user.value(this.currency).thenAccept(amount -> {
+                                MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.balanceOther(), amount, user),
+                                        Placeholder.unparsed("player", player.getName())
+                                );
+                            });
                         });
                     });
                 });
@@ -184,17 +244,14 @@ public class CurrencyCommand {
                         AxCoinsAPI.instance().getUser(offlinePlayer).thenAccept(user -> {
                             user.give(this.currency, amount).thenAccept(response -> {
                                 if (!response.success()) {
-                                    MessageUtils.sendMessage(sender, config.prefix(), config.giveFailed(), Placeholder.unparsed("player", offlinePlayer.getName()),
-                                            Placeholder.unparsed("amount", NumberArguments.formatter.format(amount)),
+                                    MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.giveFailed(), amount), Placeholder.unparsed("player", offlinePlayer.getName()),
                                             Placeholder.parsed("currency", this.currency.config().name())
                                     );
                                     return;
                                 }
 
-                                MessageUtils.sendMessage(sender, config.prefix(), config.giveSuccess(), Placeholder.unparsed("player", offlinePlayer.getName()),
-                                        Placeholder.unparsed("amount", NumberArguments.formatter.format(amount)),
-                                        Placeholder.parsed("currency", this.currency.config().name()),
-                                        Placeholder.parsed("balance", NumberArguments.formatter.format(response.amount()))
+                                MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.giveSuccess(), amount, user), Placeholder.unparsed("player", offlinePlayer.getName()),
+                                        Placeholder.parsed("currency", this.currency.config().name())
                                 );
                             });
                         });

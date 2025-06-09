@@ -101,6 +101,18 @@ public class CurrencyConfig implements com.artillexstudios.axcoins.api.currency.
     }
 
     @Override
+    public String balanceOther() {
+        String balanceOther = this.configuration.messages.balanceOther;
+        return balanceOther == null ? Language.currencies.balanceOther.replace("%currency%", this.identifier()) : balanceOther;
+    }
+
+    @Override
+    public String cooldown() {
+        String cooldown = this.configuration.messages.cooldown;
+        return cooldown == null ? Language.currencies.cooldown : cooldown;
+    }
+
+    @Override
     public String insufficientFunds() {
         String insufficientFunds = this.configuration.messages.insufficientFunds;
         return insufficientFunds == null ? Language.currencies.insufficientFunds : insufficientFunds;
@@ -115,12 +127,30 @@ public class CurrencyConfig implements com.artillexstudios.axcoins.api.currency.
     @Override
     public String giveFailed() {
         String giveFailed = this.configuration.messages.giveFailed;
-        return giveFailed == null ? Language.currencies.giveFailed : giveFailed;
+        return giveFailed == null ? Language.currencies.giveFailed.replace("%currency%", this.identifier()) : giveFailed;
     }
 
     @Override
     public String giveSuccess() {
         String giveSuccess = this.configuration.messages.giveSuccess;
-        return giveSuccess == null ? Language.currencies.giveSuccess : giveSuccess;
+        return giveSuccess == null ? Language.currencies.giveSuccess.replace("%currency%", this.identifier()) : giveSuccess;
+    }
+
+    @Override
+    public String receiverTooMuch() {
+        String receiverTooMuch = this.configuration.messages.receiverTooMuch;
+        return receiverTooMuch == null ? Language.currencies.receiverTooMuch : receiverTooMuch;
+    }
+
+    @Override
+    public String paySuccess() {
+        String paySuccess = this.configuration.messages.paySuccess;
+        return paySuccess == null ? Language.currencies.paySuccess.replace("%currency%", this.identifier()) : paySuccess;
+    }
+
+    @Override
+    public String receiveSuccess() {
+        String receiveSuccess = this.configuration.messages.receiveSuccess;
+        return receiveSuccess == null ? Language.currencies.receiveSuccess.replace("%currency%", this.identifier()) : receiveSuccess;
     }
 }

@@ -6,6 +6,10 @@ public interface MessagesConfig {
 
     String balance();
 
+    String balanceOther();
+
+    String cooldown();
+
     String insufficientFunds();
 
     String cantSendSelf();

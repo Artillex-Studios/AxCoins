@@ -33,10 +33,15 @@ public class CurrencyConfiguration implements ConfigurationPart {
     public static final class Messages {
         public String prefix = null;
         public String balance = null;
+        public String balanceOther = null;
         public String insufficientFunds = null;
         public String cantSendSelf = null;
         public String giveFailed = null;
         public String giveSuccess = null;
+        public String receiverTooMuch = null;
+        public String paySuccess = null;
+        public String receiveSuccess = null;
+        public String cooldown = null;
     }
 
     public static CurrencyConfiguration load(File file) {

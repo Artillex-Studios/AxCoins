@@ -1,6 +1,8 @@
 package com.artillexstudios.axcoins.user;
 
+import com.artillexstudios.axcoins.api.AxCoinsAPI;
 import com.artillexstudios.axcoins.api.LoadContext;
+import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.api.exception.UserAlreadyLoadedException;
 import com.artillexstudios.axcoins.api.user.User;
 import com.artillexstudios.axcoins.database.DatabaseAccessor;
@@ -47,6 +49,12 @@ public final class UserRepository implements com.artillexstudios.axcoins.api.use
         if (user != null) {
             this.tempUsers.invalidate(uuid);
             this.loadedUsers.put(uuid, user);
+
+            // Update the values of the currencies, they may be out of sync
+            for (Currency currency : AxCoinsAPI.instance().currencies().registered()) {
+                user.value(currency);
+            }
+
             return CompletableFuture.completedFuture(user);
         }
 
@@ -66,7 +74,7 @@ public final class UserRepository implements com.artillexstudios.axcoins.api.use
             if (loadContext == LoadContext.FULL) {
                 temp = this.loadedUsers.putIfAbsent(uuid, loaded);
             } else {
-                temp = loaded = this.tempUsers.asMap().putIfAbsent(uuid, loaded);
+                temp = this.tempUsers.asMap().putIfAbsent(uuid, loaded);
             }
 
             return temp == null ? loaded : temp;

@@ -3,6 +3,7 @@ package com.artillexstudios.axcoins.config;
 import com.artillexstudios.axapi.config.YamlConfiguration;
 import com.artillexstudios.axapi.config.annotation.Comment;
 import com.artillexstudios.axapi.config.annotation.ConfigurationPart;
+import com.artillexstudios.axapi.config.annotation.Header;
 import com.artillexstudios.axapi.config.annotation.Ignored;
 import com.artillexstudios.axapi.config.annotation.Serializable;
 import com.artillexstudios.axapi.libs.snakeyaml.DumperOptions;
@@ -15,6 +16,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@Header("""
+        """)
 public class Language implements ConfigurationPart {
     private static final Path LANGUAGE_DIRECTORY = FileUtils.PLUGIN_DIRECTORY.resolve("language");
     private static final Language INSTANCE = new Language();
@@ -38,11 +41,16 @@ public class Language implements ConfigurationPart {
     @Serializable
     public static final class Currencies {
         public String prefix = "<#DDCC00><b>AxCoins</b> <gray>» ";
-        public String balance = "<white>Your current balance is <balance_short_%currency%_5>";
+        public String balance = "<white>Your current balance is <amount_5>";
+        public String cooldown = "<#FF0000>You are still on cooldown for <cooldown> seconds!";
+        public String balanceOther = "<white><player>'s current balance is <amount_%currency%_5>";
         public String insufficientFunds = "<#FF0000>You don't have enough coins for that!";
         public String cantSendSelf = "<#FF0000>You can't send coins to yourself!";
         public String giveFailed = "<#FF0000>Failed to give <amount> <currency> to <player>!";
-        public String giveSuccess = "<#00FF00>Successfully gave <white><player> <amount></white> of currency <white><currency></white>! Their new balance is: <white><balance></white>.";
+        public String giveSuccess = "<#00FF00>Successfully gave <white><player> <amount></white> of currency <white><currency></white>! Their new balance is: <white><balance_short_%currency%_5></white>.";
+        public String receiverTooMuch = "<#FF0000>Can't send currency, as the new amount would exceed the max of the currency!";
+        public String paySuccess = "<#00FF00>You successfully paid <white><amount></white> to <white><player></white>! Your new balance is <amount_%currency%_5>!";
+        public String receiveSuccess = "<#00FF00><white><player></white> paid you <white><amount></white>! Your new balance is <amount_%currency%_5>!";
     }
 
     public static String invalidNumberFormat = "<#FF0000>Invalid number format <white><number></white>! Try something like <white>1000</white>!";
