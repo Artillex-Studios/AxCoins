@@ -36,10 +36,10 @@ public final class AxCoinsPlugin extends AxPlugin {
     private static AxCoinsPlugin instance;
 
     @Override
-    public void updateFlags(FeatureFlags flags) {
-        flags.PLACEHOLDER_API_HOOK.set(true);
-        flags.PLACEHOLDER_API_IDENTIFIER.set("axcoins");
-        flags.DEBUG.set(true);
+    public void updateFlags() {
+        FeatureFlags.PLACEHOLDER_API_HOOK.set(true);
+        FeatureFlags.PLACEHOLDER_API_IDENTIFIER.set("axcoins");
+        FeatureFlags.DEBUG.set(true);
     }
 
     @Override
