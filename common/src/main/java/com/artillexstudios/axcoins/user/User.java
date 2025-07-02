@@ -1,11 +1,13 @@
 package com.artillexstudios.axcoins.user;
 
+import com.artillexstudios.axapi.context.HashMapContext;
 import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.api.currency.CurrencyResponse;
-import com.artillexstudios.axcoins.api.logging.LogContext;
-import com.artillexstudios.axcoins.api.logging.arguments.LogArguments;
+import com.artillexstudios.axcoins.api.event.CurrencyChangeEvent;
+import com.artillexstudios.axcoins.api.logging.LogArguments;
 import com.artillexstudios.axcoins.config.Config;
 import com.artillexstudios.axcoins.database.DatabaseAccessor;
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
 import java.math.BigDecimal;
@@ -58,51 +60,79 @@ public class User implements com.artillexstudios.axcoins.api.user.User {
     }
 
     @Override
-    public CompletableFuture<CurrencyResponse> give(Currency currency, BigDecimal amount, LogContext context) {
+    public CompletableFuture<CurrencyResponse> give(Currency currency, BigDecimal amount, HashMapContext context) {
         return this.accessor.give(this, currency, amount).thenApply(response -> {
             this.currencyCache.put(currency, response.amount());
             return response;
         }).thenApply(response -> {
-            // TODO: Post populate the context
+            if (response.success()) {
+                CurrencyChangeEvent event = new CurrencyChangeEvent(this, response.previous(), response.amount(), context);
+                Bukkit.getPluginManager().callEvent(event);
+            }
             return response;
         });
     }
 
     @Override
     public CompletableFuture<CurrencyResponse> give(Currency currency, BigDecimal amount) {
-        return this.give(currency, amount, new LogContext.Builder()
-                .withArgument(LogArguments.RECEIVER, this.player.getUniqueId().toString())
-                .withArgument(LogArguments.SOURCE, Config.logging.storeStackTrace ? walkStack() :"API")
-                .withArgument(LogArguments.AMOUNT, amount)
-                .withArgument(LogArguments.DATE, new Date())
-                .build()
+        return this.give(currency, amount, new HashMapContext()
+                .with(LogArguments.RECEIVER, this.player.getUniqueId().toString())
+                .with(LogArguments.SOURCE, Config.logging.storeStackTrace ? walkStack() : "API")
+                .with(LogArguments.AMOUNT, amount)
+                .with(LogArguments.DATE, new Date())
+                .with(LogArguments.RECEIVER_IP_ADDRESS, this.player.getPlayer().getAddress().getAddress().toString())
         );
     }
 
     @Override
-    public CompletableFuture<CurrencyResponse> take(Currency currency, BigDecimal amount, LogContext context) {
+    public CompletableFuture<CurrencyResponse> take(Currency currency, BigDecimal amount, HashMapContext context) {
         return this.accessor.take(this, currency, amount).thenApply(response -> {
             this.currencyCache.put(currency, response.amount());
+            return response;
+        }).thenApply(response -> {
+            if (response.success()) {
+                CurrencyChangeEvent event = new CurrencyChangeEvent(this, response.previous(), response.amount(), context);
+                Bukkit.getPluginManager().callEvent(event);
+            }
+
             return response;
         });
     }
 
     @Override
     public CompletableFuture<CurrencyResponse> take(Currency currency, BigDecimal amount) {
-        return this.take(currency, amount, null);
+        return this.take(currency, amount, new HashMapContext()
+                .with(LogArguments.RECEIVER, this.player.getUniqueId().toString())
+                .with(LogArguments.SOURCE, Config.logging.storeStackTrace ? walkStack() : "API")
+                .with(LogArguments.AMOUNT, amount)
+                .with(LogArguments.DATE, new Date())
+                .with(LogArguments.RECEIVER_IP_ADDRESS, this.player.getPlayer().getAddress().getAddress().toString())
+        );
     }
 
     @Override
-    public CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, LogContext context, boolean force) {
+    public CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, HashMapContext context, boolean force) {
         return this.accessor.set(this, currency, amount, force).thenApply(response -> {
             this.currencyCache.put(currency, response.amount());
+            return response;
+        }).thenApply(response -> {
+            if (response.success()) {
+                CurrencyChangeEvent event = new CurrencyChangeEvent(this, response.previous(), response.amount(), context);
+                Bukkit.getPluginManager().callEvent(event);
+            }
+
             return response;
         });
     }
 
     @Override
     public CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, boolean force) {
-        return this.set(currency, amount, null, force);
+        return this.set(currency, amount, new HashMapContext()
+                .with(LogArguments.RECEIVER, this.player.getUniqueId().toString())
+                .with(LogArguments.SOURCE, Config.logging.storeStackTrace ? walkStack() : "API")
+                .with(LogArguments.AMOUNT, amount)
+                .with(LogArguments.DATE, new Date())
+                .with(LogArguments.RECEIVER_IP_ADDRESS, this.player.getPlayer().getAddress().getAddress().toString()), force);
     }
 
     public static String walkStack() {

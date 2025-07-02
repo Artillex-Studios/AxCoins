@@ -1,8 +1,8 @@
 package com.artillexstudios.axcoins.api.user;
 
+import com.artillexstudios.axapi.context.HashMapContext;
 import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.api.currency.CurrencyResponse;
-import com.artillexstudios.axcoins.api.logging.LogContext;
 import org.bukkit.OfflinePlayer;
 
 import java.math.BigDecimal;
@@ -62,7 +62,7 @@ public interface User {
      * @param context The LogContext to use for logging purposes.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
-    CompletableFuture<CurrencyResponse> give(Currency currency, BigDecimal amount, LogContext context);
+    CompletableFuture<CurrencyResponse> give(Currency currency, BigDecimal amount, HashMapContext context);
 
     /**
      * Give the user the amount of currency.
@@ -79,7 +79,7 @@ public interface User {
      * @param context The LogContext to use for logging purposes.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
-    CompletableFuture<CurrencyResponse> take(Currency currency, BigDecimal amount, LogContext context);
+    CompletableFuture<CurrencyResponse> take(Currency currency, BigDecimal amount, HashMapContext context);
 
     /**
      * Take amount of currency from the user.
@@ -97,7 +97,7 @@ public interface User {
      * @param force Whether to take into account the currencies limitations.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
-    CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, LogContext context, boolean force);
+    CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, HashMapContext context, boolean force);
 
     /**
      * Set the amount of currency for the user.
@@ -114,7 +114,7 @@ public interface User {
      * @param amount The amount.
      * @return A CompletableFuture that is completed when the data is updated in the database.
      */
-    default CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, LogContext context) {
+    default CompletableFuture<CurrencyResponse> set(Currency currency, BigDecimal amount, HashMapContext context) {
         return this.set(currency, amount, context, false);
     }
 

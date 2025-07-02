@@ -184,13 +184,13 @@ public class DatabaseAccessor {
             CurrencyResponse read = this.optimisticRead(user, currency, found -> {
                 BigDecimal bigDecimal = found.add(currencyAmount);
                 if (NEGATIVE_ONE.compareTo(currency.config().maximumValue()) != 0 && bigDecimal.compareTo(currency.config().maximumValue()) > 0) {
-                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
+                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, found, false);
                 }
 
-                return new com.artillexstudios.axcoins.currency.CurrencyResponse(found.add(currencyAmount), true);
+                return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, found.add(currencyAmount), true);
             });
 
-            return read == null ? new com.artillexstudios.axcoins.currency.CurrencyResponse(BigDecimal.ZERO, false) : read;
+            return read == null ? new com.artillexstudios.axcoins.currency.CurrencyResponse(BigDecimal.ZERO, BigDecimal.ZERO, false) : read;
         }, AsyncUtils.executor());
     }
 
@@ -199,13 +199,13 @@ public class DatabaseAccessor {
             CurrencyResponse read = this.optimisticRead(user, currency, found -> {
                 BigDecimal bigDecimal = found.subtract(currencyAmount);
                 if (bigDecimal.compareTo(currency.config().minimumValue()) < 0) {
-                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
+                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, found, false);
                 }
 
-                return new com.artillexstudios.axcoins.currency.CurrencyResponse(bigDecimal, true);
+                return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, bigDecimal, true);
             });
 
-            return read == null ? new com.artillexstudios.axcoins.currency.CurrencyResponse(BigDecimal.ZERO, false) : read;
+            return read == null ? new com.artillexstudios.axcoins.currency.CurrencyResponse(BigDecimal.ZERO,BigDecimal.ZERO, false) : read;
         }, AsyncUtils.executor());
     }
 
@@ -213,17 +213,17 @@ public class DatabaseAccessor {
         return CompletableFuture.supplyAsync(() -> {
             CurrencyResponse read = this.optimisticRead(user, currency, found -> {
                 if (currencyAmount.compareTo(currency.config().minimumValue()) < 0 && !force) {
-                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
+                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, found, false);
                 }
 
                 if (NEGATIVE_ONE.compareTo(currency.config().maximumValue()) != 0 && currencyAmount.compareTo(currency.config().maximumValue()) > 0 && !force) {
-                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, false);
+                    return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, found, false);
                 }
 
-                return new com.artillexstudios.axcoins.currency.CurrencyResponse(currencyAmount, true);
+                return new com.artillexstudios.axcoins.currency.CurrencyResponse(found, currencyAmount, true);
             });
 
-            return read == null ? new com.artillexstudios.axcoins.currency.CurrencyResponse(BigDecimal.ZERO, false) : read;
+            return read == null ? new com.artillexstudios.axcoins.currency.CurrencyResponse(BigDecimal.ZERO, BigDecimal.ZERO, false) : read;
         }, AsyncUtils.executor());
     }
 

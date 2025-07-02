@@ -1,5 +1,6 @@
 package com.artillexstudios.axcoins.command;
 
+import com.artillexstudios.axapi.context.HashMapContext;
 import com.artillexstudios.axapi.placeholders.PlaceholderHandler;
 import com.artillexstudios.axapi.utils.Cooldown;
 import com.artillexstudios.axapi.utils.MessageUtils;
@@ -7,6 +8,7 @@ import com.artillexstudios.axapi.utils.logging.LogUtils;
 import com.artillexstudios.axcoins.api.AxCoinsAPI;
 import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.api.currency.config.CurrencyConfig;
+import com.artillexstudios.axcoins.api.logging.LogArguments;
 import com.artillexstudios.axcoins.api.user.User;
 import com.artillexstudios.axcoins.command.argument.NumberArguments;
 import com.artillexstudios.axcoins.config.Config;
@@ -20,6 +22,7 @@ import org.bukkit.entity.Player;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -124,14 +127,27 @@ public class CurrencyCommand {
                                         return;
                                     }
 
-                                    user.take(this.currency, amount).thenAccept(response -> {
+                                    Player onlineReceiver = receiver.player().getPlayer();
+                                    HashMapContext context = new HashMapContext()
+                                            .with(LogArguments.DATE, new Date())
+                                            .with(LogArguments.RECEIVER_NEW, receiver.cached(this.currency).add(amount))
+                                            .with(LogArguments.RECEIVER_PREVIOUS, receiver.cached(this.currency))
+                                            .with(LogArguments.RECEIVER_IP_ADDRESS, onlineReceiver == null ? "PLAYER OFFLINE" : onlineReceiver.getAddress().getAddress().toString())
+                                            .with(LogArguments.RECEIVER, receiver.player().getName())
+                                            .with(LogArguments.AMOUNT, amount)
+                                            .with(LogArguments.SOURCE, sender.getName())
+                                            .with(LogArguments.SOURCE_IP_ADDRESS, sender.getAddress().getAddress().toString())
+                                            .with(LogArguments.SOURCE_PREVIOUS, user.cached(this.currency))
+                                            .with(LogArguments.SOURCE_NEW, user.cached(this.currency).subtract(amount));
+
+                                    user.take(this.currency, amount, context).thenAccept(response -> {
                                         if (!response.success()) {
                                             MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.insufficientFunds(), user, amount));
                                             this.payCooldown.remove(sender.getUniqueId());
                                             return;
                                         }
 
-                                        receiver.give(this.currency, amount).thenAccept(giveResponse -> {
+                                        receiver.give(this.currency, amount, context).thenAccept(giveResponse -> {
                                             if (!response.success()) {
                                                 MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.receiverTooMuch(), user, amount));
                                                 user.give(this.currency, amount);
@@ -240,9 +256,24 @@ public class CurrencyCommand {
                         return;
                     }
 
+
+
                     player.thenAccept(offlinePlayer -> {
                         AxCoinsAPI.instance().getUser(offlinePlayer).thenAccept(user -> {
-                            user.give(this.currency, amount).thenAccept(response -> {
+                            Player onlineReceiver = offlinePlayer.getPlayer();
+                            HashMapContext context = new HashMapContext()
+                                    .with(LogArguments.DATE, new Date())
+                                    .with(LogArguments.RECEIVER_NEW, user.cached(this.currency).add(amount))
+                                    .with(LogArguments.RECEIVER_PREVIOUS, user.cached(this.currency))
+                                    .with(LogArguments.RECEIVER_IP_ADDRESS, onlineReceiver == null ? "PLAYER OFFLINE" : onlineReceiver.getAddress().getAddress().toString())
+                                    .with(LogArguments.RECEIVER, user.player().getName())
+                                    .with(LogArguments.AMOUNT, amount)
+                                    .with(LogArguments.SOURCE, sender.getName())
+                                    .with(LogArguments.SOURCE_IP_ADDRESS, sender instanceof Player playerSender ? playerSender.getAddress().getAddress().toString() : sender.getName())
+                                    .with(LogArguments.SOURCE_PREVIOUS, BigDecimal.ZERO)
+                                    .with(LogArguments.SOURCE_NEW, BigDecimal.ZERO);
+
+                            user.give(this.currency, amount, context).thenAccept(response -> {
                                 if (!response.success()) {
                                     MessageUtils.sendMessage(sender, config.prefix(), PlaceholderHandler.parse(config.giveFailed(), amount), Placeholder.unparsed("player", offlinePlayer.getName()),
                                             Placeholder.parsed("currency", this.currency.config().name())
@@ -279,7 +310,20 @@ public class CurrencyCommand {
                     }
 
                     AxCoinsAPI.instance().repository().onlineUsers().forEach(user -> {
-                        user.give(this.currency, amount).thenAccept(response -> {
+                        Player onlineReceiver = user.player().getPlayer();
+                        HashMapContext context = new HashMapContext()
+                                .with(LogArguments.DATE, new Date())
+                                .with(LogArguments.RECEIVER_NEW, user.cached(this.currency).add(amount))
+                                .with(LogArguments.RECEIVER_PREVIOUS, user.cached(this.currency))
+                                .with(LogArguments.RECEIVER_IP_ADDRESS, onlineReceiver == null ? "PLAYER OFFLINE" : onlineReceiver.getAddress().getAddress().toString())
+                                .with(LogArguments.RECEIVER, user.player().getName())
+                                .with(LogArguments.AMOUNT, amount)
+                                .with(LogArguments.SOURCE, sender.getName())
+                                .with(LogArguments.SOURCE_IP_ADDRESS, sender instanceof Player playerSender ? playerSender.getAddress().getAddress().toString() : sender.getName())
+                                .with(LogArguments.SOURCE_PREVIOUS, BigDecimal.ZERO)
+                                .with(LogArguments.SOURCE_NEW, BigDecimal.ZERO);
+
+                        user.give(this.currency, amount, context).thenAccept(response -> {
                             // TODO: Fail and success messages
                             if (!response.success()) {
                                 return;
@@ -315,13 +359,26 @@ public class CurrencyCommand {
 
                     player.thenAccept(offlinePlayer -> {
                         AxCoinsAPI.instance().getUser(offlinePlayer).thenAccept(user -> {
+                            Player onlineReceiver = user.player().getPlayer();
+                            HashMapContext context = new HashMapContext()
+                                    .with(LogArguments.DATE, new Date())
+                                    .with(LogArguments.RECEIVER_NEW, user.cached(this.currency).add(amount))
+                                    .with(LogArguments.RECEIVER_PREVIOUS, user.cached(this.currency))
+                                    .with(LogArguments.RECEIVER_IP_ADDRESS, onlineReceiver == null ? "PLAYER OFFLINE" : onlineReceiver.getAddress().getAddress().toString())
+                                    .with(LogArguments.RECEIVER, user.player().getName())
+                                    .with(LogArguments.AMOUNT, amount)
+                                    .with(LogArguments.SOURCE, sender.getName())
+                                    .with(LogArguments.SOURCE_IP_ADDRESS, sender instanceof Player playerSender ? playerSender.getAddress().getAddress().toString() : sender.getName())
+                                    .with(LogArguments.SOURCE_PREVIOUS, BigDecimal.ZERO)
+                                    .with(LogArguments.SOURCE_NEW, BigDecimal.ZERO);
+
                             user.has(this.currency, amount).thenAccept(result -> {
                                 if (!result) {
                                     // TODO: Not enough money message
                                     return;
                                 }
 
-                                user.take(this.currency, amount).thenAccept(response -> {
+                                user.take(this.currency, amount, context).thenAccept(response -> {
                                     // TODO: Fail and success messages
                                     if (!response.success()) {
                                         return;
@@ -359,7 +416,20 @@ public class CurrencyCommand {
 
                     player.thenAccept(offlinePlayer -> {
                         AxCoinsAPI.instance().getUser(offlinePlayer).thenAccept(user -> {
-                            user.set(this.currency, amount).thenAccept(response -> {
+                            Player onlineReceiver = user.player().getPlayer();
+                            HashMapContext context = new HashMapContext()
+                                    .with(LogArguments.DATE, new Date())
+                                    .with(LogArguments.RECEIVER_NEW, user.cached(this.currency).add(amount))
+                                    .with(LogArguments.RECEIVER_PREVIOUS, user.cached(this.currency))
+                                    .with(LogArguments.RECEIVER_IP_ADDRESS, onlineReceiver == null ? "PLAYER OFFLINE" : onlineReceiver.getAddress().getAddress().toString())
+                                    .with(LogArguments.RECEIVER, user.player().getName())
+                                    .with(LogArguments.AMOUNT, amount)
+                                    .with(LogArguments.SOURCE, sender.getName())
+                                    .with(LogArguments.SOURCE_IP_ADDRESS, sender instanceof Player playerSender ? playerSender.getAddress().getAddress().toString() : sender.getName())
+                                    .with(LogArguments.SOURCE_PREVIOUS, BigDecimal.ZERO)
+                                    .with(LogArguments.SOURCE_NEW, BigDecimal.ZERO);
+
+                            user.set(this.currency, amount, context).thenAccept(response -> {
                                 // TODO: Fail and success messages
                                 if (!response.success()) {
                                     return;
