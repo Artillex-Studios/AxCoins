@@ -33,6 +33,7 @@ public final class AxCoinsPlugin extends AxPlugin {
     private CurrencyProviders currencyProviders;
     private CurrencyConfigProviders currencyConfigProviders;
     private ConfigCurrencyLoader loader;
+    private DatabaseHandler handler;
     private static AxCoinsPlugin instance;
 
     @Override
@@ -73,7 +74,8 @@ public final class AxCoinsPlugin extends AxPlugin {
         AsyncUtils.setup(Config.asyncProcessorPoolSize);
         this.currencies = new Currencies();
         this.currencyProviders = new CurrencyProviders();
-        this.accessor = new DatabaseAccessor(this.currencies, new DatabaseHandler(this, Config.database));
+        this.handler = new DatabaseHandler(this, Config.database);
+        this.accessor = new DatabaseAccessor(this.currencies, this.handler);
         this.accessor.load().thenRun(() -> {
             if (Config.debug) {
                 LogUtils.debug("Loaded DatabaseAccessor!");
@@ -92,6 +94,7 @@ public final class AxCoinsPlugin extends AxPlugin {
                 LogUtils.debug("Loaded all config currencies!");
             }
 
+            AxCoinsCommand.register();
             AxCoinsCommand.enable();
         });
 
@@ -122,6 +125,10 @@ public final class AxCoinsPlugin extends AxPlugin {
 
     public CurrencyProviders currencyProviders() {
         return this.currencyProviders;
+    }
+
+    public DatabaseHandler handler() {
+        return this.handler;
     }
 
     // TODO: reload command
