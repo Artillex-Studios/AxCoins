@@ -1,7 +1,12 @@
 package com.artillexstudios.axcoins.command;
 
 import com.artillexstudios.axapi.AxPlugin;
+import com.artillexstudios.axapi.database.handler.ListHandler;
+import com.artillexstudios.axapi.database.handler.TransformerHandler;
 import com.artillexstudios.axapi.utils.MessageUtils;
+import com.artillexstudios.axcoins.AxCoinsPlugin;
+import com.artillexstudios.axcoins.api.AxCoinsAPI;
+import com.artillexstudios.axcoins.api.currency.Currency;
 import com.artillexstudios.axcoins.config.Config;
 import com.artillexstudios.axcoins.config.Language;
 import dev.jorel.commandapi.CommandAPI;
@@ -10,8 +15,10 @@ import dev.jorel.commandapi.CommandTree;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class AxCoinsCommand {
 
@@ -54,6 +61,25 @@ public class AxCoinsCommand {
                             }
                         })
                 )
+                .then(new LiteralArgument("convert")
+                        .withPermission("axcoins.command.convert")
+                        .executes((sender, args) -> {
+                            List<PointData> data = AxCoinsPlugin.instance().handler().rawQuery("SELECT uuid, points FROM playerpoints_points;", new ListHandler<>(new TransformerHandler<>(PointData.class)))
+                                    .create()
+                                    .query();
+
+                            Currency currency = AxCoinsAPI.instance().currencies().registered().stream().findFirst().orElseThrow();
+                            for (PointData user : data) {
+                                AxCoinsAPI.instance().getUser(UUID.fromString(user.uuid)).thenAccept(loadedUser -> {
+                                    loadedUser.set(currency, BigDecimal.valueOf(user.points));
+                                });
+                            }
+                        })
+                )
                 .register();
+    }
+
+    public record PointData(String uuid, Integer points) {
+
     }
 }

@@ -102,7 +102,7 @@ public class DatabaseAccessor {
             }
 
             OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
-            Integer userId = this.userInsert.create().execute(player.getName(), uuid);
+            Integer userId = this.userInsert.create().execute(uuid);
             if (userId == null) {
                 LogUtils.error("Failed to create account for user!");
                 return null;
