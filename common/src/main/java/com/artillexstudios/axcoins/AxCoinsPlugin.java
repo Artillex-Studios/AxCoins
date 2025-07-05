@@ -45,7 +45,7 @@ public final class AxCoinsPlugin extends AxPlugin {
 
     @Override
     public void dependencies(DependencyManagerWrapper manager) {
-        manager.dependency("dev{}jorel:commandapi-bukkit-shade:10.0.0", true);
+        manager.dependency("dev{}jorel:commandapi-bukkit-shade:10.1.0", true);
         manager.dependency("com{}h2database:h2:2.3.232");
         manager.dependency("com{}zaxxer:HikariCP:5.1.0");
 

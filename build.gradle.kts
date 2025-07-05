@@ -35,7 +35,7 @@ subprojects {
         implementation("com.artillexstudios.axapi:axapi:1.4.721:all")
         compileOnly("com.github.ben-manes.caffeine:caffeine:3.2.0")
         compileOnly("org.spigotmc:spigot-api:1.21-R0.1-SNAPSHOT")
-        compileOnly("dev.jorel:commandapi-bukkit-shade:10.0.0")
+        compileOnly("dev.jorel:commandapi-bukkit-shade:10.1.0")
         compileOnly("org.apache.commons:commons-lang3:3.14.0")
         compileOnly("com.github.MilkBowl:VaultAPI:1.7")
         compileOnly("me.clip:placeholderapi:2.11.6")
